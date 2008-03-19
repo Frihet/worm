@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!--
+ Webwidgets web developement framework example file
+ Copyright (C) 2006 uAnywhere, Egil Moeller <redhog@redhog.org>
+ Copyright (C) 2007 FreeCode AS, Egil Moeller <egil.moller@freecode.no>
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
+USA
+-->
+<w:wwml
+ xmlns="http://www.w3.org/TR/REC-html40"
+ xmlns:w="http://freecode.no/xml/namespaces/wwml-1.0"
+ xmlns:html="http://www.w3.org/TR/REC-html40"
+ >
+ <w:HtmlWindow
+  using="Webwidgets"
+  bind="Callbacks.MyWindow"
+
+  id="MyWindow"
+  title="Autoexpand test">
+
+  <w:Html id="Body">
+
+   <w:Table id="Autoexpand" rows_per_page=":integer:20">
+    <w:odict id="columns">
+     <w:string id="country">Country</w:string>
+     <w:string id="provider">Provider</w:string>
+     <w:string id="technology">Technology</w:string>
+     <w:string id="price">Price-range</w:string>
+    </w:odict>
+   </w:Table>
+
+  </w:Html>
+ </w:HtmlWindow>
+</w:wwml>
