@@ -15,6 +15,14 @@ files = [arg
          for arg in sys.argv[1:]
          if not arg.startswith('--')]
 
+model = None
+if 'model' in kws:
+    model = __import__(kws['model'])
+    for item in kws['model'].split('.')[1:]:
+        model = getattr(model, item)
+else:
+    options.add('help')
+    
 if 'help' in options:
     print """Usage: SetupDatabase.py --model=ORM.Model.Python.Module.Path OPTIONS
     Where OPTIONS are
@@ -25,13 +33,14 @@ if 'help' in options:
         --schema
             Create all tables and views
         --data
-            Insert initial data into tables
-"""
+            Insert initial data into tables"""
+    if model is None:
+        print """        Other model specific arguments"""
+    else:
+        for key, value in getattr(model, 'initial_data_params', {}).iteritems():
+            print """        --%s
+            %s""" % (key, value)
     sys.exit(0)
-
-model = __import__(kws['model'])
-for item in kws['model'].split('.')[1:]:
-    model = getattr(model, item)
 
 if 'drop' in options:
     elixir.drop_all(bind=model.engine)
@@ -41,4 +50,4 @@ if 'schema' in options or 'all' in options:
 
 if 'data' in options or 'all' in options:
     with model.engine.Session() as session:
-        model.createInitialData(session)
+        model.createInitialData(session, *options, **kws)
