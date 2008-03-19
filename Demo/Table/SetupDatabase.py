@@ -3,8 +3,8 @@
 from __future__ import with_statement
 
 import sqlalchemy, sqlalchemy.orm, elixir, sys
-import Webwidgets.Demo.TableAutoexpandORM.Model
-import Webwidgets.Demo.TableAutoexpandORM.Database
+import Worm.Demo.Table.Model
+import Worm.Demo.Table.Database
 
 
 kws = dict([arg[2:].split('=', 1)
@@ -19,11 +19,11 @@ files = [arg
 
 
 if 'drop' in options:
-    elixir.drop_all(bind=Webwidgets.Demo.TableAutoexpandORM.Database.engine)
+    elixir.drop_all(bind=Worm.Demo.Table.Database.engine)
 
 if 'schema' in options or 'all' in options:
-    elixir.create_all(bind=Webwidgets.Demo.TableAutoexpandORM.Database.engine)
+    elixir.create_all(bind=Worm.Demo.Table.Database.engine)
 
 if 'data' in options or 'all' in options:
-    with Webwidgets.Demo.TableAutoexpandORM.Database.engine.Session() as session:
-        Webwidgets.Demo.TableAutoexpandORM.Model.createInitialData(session)
+    with Worm.Demo.Table.Database.engine.Session() as session:
+        Worm.Demo.Table.Model.createInitialData(session)
