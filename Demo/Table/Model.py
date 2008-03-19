@@ -1,6 +1,9 @@
 import elixir, itertools
+import Worm.Utils, Worm.Demo.Table.Config
 
 __session__ = None
+
+engine = Worm.Utils.create_engine(Worm.Demo.Table.Config.database_url)
 
 class Service(elixir.entity.Entity):
     country = elixir.Field(elixir.Unicode)

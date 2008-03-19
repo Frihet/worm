@@ -20,13 +20,13 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import Webwidgets
-import UI, Database
+import UI, Model
 
 class index(Webwidgets.Program):
     class Session(Webwidgets.Program.Session):
         def __init__(self, *arg, **attrs):
             Webwidgets.Program.Session.__init__(self, *arg, **attrs)
-            self.db = Database.engine.Session()
+            self.db = Model.engine.Session()
             
         def new_window(self, win_id):
             return UI.MyWindow(self, win_id)
