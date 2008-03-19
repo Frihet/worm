@@ -25,4 +25,5 @@
 # directory. Doing so makes us have copies of some classes, which
 # fucks up isinstance()-calls.
 if __name__ == "Worm":
+    from Program import *
     from Widgets.Table import *

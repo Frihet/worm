@@ -20,13 +20,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import Webwidgets
-import UI, Model
+import Worm, UI, Model
 
-class index(Webwidgets.Program):
-    class Session(Webwidgets.Program.Session):
-        def __init__(self, *arg, **attrs):
-            Webwidgets.Program.Session.__init__(self, *arg, **attrs)
-            self.db = Model.engine.Session()
-            
+class index(Worm.Program):
+    DBModel = Model
+    class Session(Worm.Program.Session):
         def new_window(self, win_id):
             return UI.MyWindow(self, win_id)
