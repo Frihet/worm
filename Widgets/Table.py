@@ -21,11 +21,41 @@
 # USA
 
 import Webwidgets
-import Worm.Utils, math, sqlalchemy.sql
+import Worm.Utils, math, sqlalchemy.sql, itertools
 
 class Table(Webwidgets.Table):
     debug_queries = False
     debug_expand_info = False
+
+    class Model(Webwidgets.Table.Model):
+        class DBModel(object):
+            def __getattr__(self, name):
+                if name == "ww_row_id":
+                    return self.id
+                raise AttributeError
+
+            def iterkeys(self):
+                return itertools.imap(lambda col: col.name, type(self).table.columns)
+
+            def iteritems(self):
+                return itertools.imap(lambda name: (name, self[name]), self.iterkeys())
+
+            def itervalues(self):
+                return itertools.imap(lambda name: self[name], self.iterkeys())
+
+            def __iter__(self):
+                return self.iterkeys()
+
+            def __getitem__(self, name):
+                return getattr(self, name)
+
+            def get(self, name, default = None):
+                try:
+                    return self[name]
+                except AttributeError:
+                    if default is not None:
+                        return default
+                    raise AttributeError
     
     class RowFilters(Webwidgets.Table.RowFilters):
         Filters = Webwidgets.Table.RowFilters.Filters + ['SQLAlchemyFilter']
