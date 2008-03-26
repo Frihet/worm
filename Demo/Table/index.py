@@ -22,6 +22,8 @@
 import Webwidgets
 import Worm, UI, Model
 
+Webwidgets.Program.profile = True
+
 class index(Worm.Program):
     DBModel = Model
     class Session(Worm.Program.Session):
