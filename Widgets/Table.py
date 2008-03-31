@@ -28,7 +28,18 @@ class Table(Webwidgets.Table):
     debug_expand_info = False
 
     class Model(Webwidgets.Table.Model):
+        db_where = None
+        """This is a filter to be applied to all database queries,
+        prior to any sorting, expansion etc. It can be any SQLAlchemy
+        SQL Expression expression."""
+        
         class DBModel(object):
+            """This is the database model used by the table. This
+            class must be subclassed and mapped using SQLAlchemy. It
+            requires the mapped table to be available in the table
+            attribute (this is fullfilled automatically if you are
+            using elixir)."""
+            
             def __getattr__(self, name):
                 if name == "ww_row_id":
                     return self.id
@@ -66,6 +77,8 @@ class Table(Webwidgets.Table):
         def get_row_query(self, all, output_options):
             expand_tree = self.get_expand_tree()
             query = self.session.db.query(self.DBModel)
+            if self.db_where is not None:
+                query = query.filter(db_where)
 
             # We need a complete ordering, so that the sorting is
             # deterministic and stable over reloads...
