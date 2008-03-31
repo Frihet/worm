@@ -21,7 +21,7 @@
 # USA
 
 import Webwidgets
-import Worm.Utils, math, sqlalchemy.sql, itertools
+import Worm.Utils, math, sqlalchemy.sql, itertools, types
 
 class Table(Webwidgets.Table):
     debug_queries = False
@@ -45,14 +45,27 @@ class Table(Webwidgets.Table):
                     return self.id
                 raise AttributeError
 
-            def iterkeys(self):
-                return itertools.imap(lambda col: col.name, type(self).table.columns)
-
             def iteritems(self):
-                return itertools.imap(lambda name: (name, self[name]), self.iterkeys())
-
+                return itertools.ifilter(lambda (name, value): not isinstance(value, types.MethodType),
+                                         itertools.imap(lambda name: (name, self[name]),
+                                                        itertools.ifilter(lambda name: not name.startswith('_'),
+                                                                          dir(self))))
+            
+            def iterkeys(self):
+                return itertools.imap(lambda (name, value): name,
+                                      self.iteritems())
             def itervalues(self):
-                return itertools.imap(lambda name: self[name], self.iterkeys())
+                return itertools.imap(lambda (name, value): value,
+                                      self.iteritems())
+
+#             def iterkeys(self):
+#                 return itertools.imap(lambda col: col.name, type(self).table.columns)
+
+#             def iteritems(self):
+#                 return itertools.imap(lambda name: (name, self[name]), self.iterkeys())
+
+#             def itervalues(self):
+#                 return itertools.imap(lambda name: self[name], self.iterkeys())
 
             def __iter__(self):
                 return self.iterkeys()
@@ -95,11 +108,11 @@ class Table(Webwidgets.Table):
                 # algoritm used in Webwidgets.Table.
                 def tree_to_filter(node):
                     if node.toggled:
-                        return self.DBModel.table.c.id.in_(node.rows.keys())
+                        return self.DBModel.id.in_(node.rows.keys())
                     else:
                         whens = []
                         for value, sub in node.values.iteritems():
-                            whens.append((getattr(self.DBModel.table.c, node.col) == value,
+                            whens.append((getattr(self.DBModel, node.col) == value,
                                          tree_to_filter(sub)))
                         if whens:
                             return sqlalchemy.sql.case(whens, else_ = Worm.Utils.True_)
@@ -160,7 +173,7 @@ class Table(Webwidgets.Table):
 
             for col, order in sort:
                 query = query.order_by(getattr(getattr(self.DBModel, col).expression_element(), order)())
-            query = query.order_by(self.DBModel.table.c.id.asc())
+            query = query.order_by(self.DBModel.id.asc())
 
             if not all:
                 query = query[(self.page - 1) * self.rows_per_page:
@@ -179,7 +192,7 @@ class Table(Webwidgets.Table):
             return list(self.get_row_query(all, output_options))
 
         def get_row_by_id(self, row_id):
-            return self.session.db.query(self.DBModel).filter(self.DBModel.table.c.id == row_id)[0]
+            return self.session.db.query(self.DBModel).filter(self.DBModel.id == row_id)[0]
 
         def get_row_id(self, row):
             return str(row['id'])
