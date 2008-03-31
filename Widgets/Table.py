@@ -67,6 +67,10 @@ class Table(Webwidgets.Table):
                     if default is not None:
                         return default
                     raise AttributeError
+
+            def get_column_from_alias(cls, alias, col):
+                return getattr(alias.c, ("%s_%s_%s" % (cls.__module__.replace('.', '_'), cls.__name__, col)).lower())
+            get_column_from_alias = classmethod(get_column_from_alias)
     
     class RowFilters(Webwidgets.Table.RowFilters):
         Filters = Webwidgets.Table.RowFilters.Filters + ['SQLAlchemyFilter']
@@ -104,11 +108,11 @@ class Table(Webwidgets.Table):
             else:
                 # OK, this is a bit uggly, but there is no other way in SQL :(
                 # This computes the previous line (per the sorting order) of each line
-                prev_row_id = self.DBModel.table.alias()
+                prev_row_id = query.compile().alias()
                 row_cmp = Worm.Utils.False_
                 for col, order in reversed(sort):
-                    prev_col = getattr(prev_row_id.c, col)
-                    cur_col = getattr(self.DBModel.table.c, col)
+                    prev_col = self.DBModel.get_column_from_alias(prev_row_id, col)
+                    cur_col = getattr(self.DBModel, col)
                     if order == 'asc':
                         col_cmp = prev_col < cur_col
                     else:
@@ -117,18 +121,20 @@ class Table(Webwidgets.Table):
                         col_cmp, 
                         sqlalchemy.sql.and_(prev_col == cur_col,
                                             row_cmp))
-                prev_row_id_query = sqlalchemy.sql.select([prev_row_id.c.id], row_cmp)
+                prev_row_id_query = sqlalchemy.sql.select([self.DBModel.get_column_from_alias(prev_row_id, 'id')], row_cmp)
                 for col, order in sort:
                     order = ['asc', 'desc'][order == 'asc'] # Sort backwards
-                    prev_row_id_query = prev_row_id_query.order_by(getattr(getattr(prev_row_id.c, col), order)())
+                    prev_row_id_query = prev_row_id_query.order_by(
+                        getattr(self.DBModel.get_column_from_alias(prev_row_id, col).expression_element(),
+                                order)())
                 prev_row_id_query = prev_row_id_query.limit(1)
 
                 # Now that previous line is outer joined to each line
-                prev_row = self.DBModel.table.alias()
+                prev_row = query.compile().alias()
                 query = query.select_from(
                     self.DBModel.table.outerjoin(
                         prev_row,
-                        prev_row.c.id == prev_row_id_query.as_scalar()))
+                        self.DBModel.get_column_from_alias(prev_row, 'id') == prev_row_id_query.as_scalar()))
 
                 # This should be recognizable from the pure in-memory
                 # algoritm used in Webwidgets.Table (it's nearly the
@@ -140,19 +146,20 @@ class Table(Webwidgets.Table):
                         sub_query = Worm.Utils.False_
                         if sub.toggled:
                             sub_query = tree_to_filter(sub)
-                        whens.append((getattr(self.DBModel.table.c, node.col) == value,
+                        whens.append((getattr(self.DBModel, node.col) == value,
                                      sub_query))
                     if whens:
                         node_query = sqlalchemy.sql.case(whens, else_ = Worm.Utils.False_)
                     else:
                         node_query = Worm.Utils.False_
-                    return sqlalchemy.sql.case([(getattr(prev_row.c, node.col) == getattr(self.DBModel.table.c, node.col), node_query)],
+                    return sqlalchemy.sql.case([(   self.DBModel.get_column_from_alias(prev_row, node.col)
+                                                 == getattr(self.DBModel, node.col), node_query)],
                                                else_ = Worm.Utils.True_)
 
             query = query.filter(tree_to_filter(expand_tree))
 
             for col, order in sort:
-                query = query.order_by(getattr(getattr(self.DBModel.table.c, col), order)())
+                query = query.order_by(getattr(getattr(self.DBModel, col).expression_element(), order)())
             query = query.order_by(self.DBModel.table.c.id.asc())
 
             if not all:
