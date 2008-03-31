@@ -58,15 +58,6 @@ class Table(Webwidgets.Table):
                 return itertools.imap(lambda (name, value): value,
                                       self.iteritems())
 
-#             def iterkeys(self):
-#                 return itertools.imap(lambda col: col.name, type(self).table.columns)
-
-#             def iteritems(self):
-#                 return itertools.imap(lambda name: (name, self[name]), self.iterkeys())
-
-#             def itervalues(self):
-#                 return itertools.imap(lambda name: self[name], self.iterkeys())
-
             def __iter__(self):
                 return self.iterkeys()
 
@@ -86,7 +77,7 @@ class Table(Webwidgets.Table):
             get_column_from_alias = classmethod(get_column_from_alias)
     
     class RowFilters(Webwidgets.Table.RowFilters):
-        Filters = Webwidgets.Table.RowFilters.Filters + ['SQLAlchemyFilter']
+        WwFilters = Webwidgets.Table.RowFilters.WwFilters + ['SQLAlchemyFilter']
 
     class SQLAlchemyFilter(Webwidgets.Filter):
         non_memory_storage = True
