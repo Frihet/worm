@@ -27,7 +27,7 @@ class Table(Webwidgets.Table):
     debug_queries = False
     debug_expand_info = False
 
-    class Model(Webwidgets.Table.Model):
+    class WwModel(Webwidgets.Table.WwModel):
         db_where = None
         """This is a filter to be applied to all database queries,
         prior to any sorting, expansion etc. It can be any SQLAlchemy
