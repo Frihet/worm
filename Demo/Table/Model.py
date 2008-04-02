@@ -5,7 +5,7 @@ __session__ = None
 
 engine = Worm.Utils.create_engine(Worm.Demo.Table.Config.database_url)
 
-class Service(Worm.Table.Model.DBModel, elixir.entity.Entity):
+class Service(Worm.Table.WwModel.DBModel, elixir.entity.Entity):
     country = elixir.Field(elixir.Unicode)
     provider = elixir.Field(elixir.Unicode)
     technology = elixir.Field(elixir.Unicode)

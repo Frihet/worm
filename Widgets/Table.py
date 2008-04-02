@@ -45,33 +45,6 @@ class Table(Webwidgets.Table):
                     return self.id
                 raise AttributeError
 
-            def iteritems(self):
-                return itertools.ifilter(lambda (name, value): not isinstance(value, types.MethodType),
-                                         itertools.imap(lambda name: (name, self[name]),
-                                                        itertools.ifilter(lambda name: not name.startswith('_'),
-                                                                          dir(self))))
-            
-            def iterkeys(self):
-                return itertools.imap(lambda (name, value): name,
-                                      self.iteritems())
-            def itervalues(self):
-                return itertools.imap(lambda (name, value): value,
-                                      self.iteritems())
-
-            def __iter__(self):
-                return self.iterkeys()
-
-            def __getitem__(self, name):
-                return getattr(self, name)
-
-            def get(self, name, default = None):
-                try:
-                    return self[name]
-                except AttributeError:
-                    if default is not None:
-                        return default
-                    raise AttributeError
-
             def get_column_from_alias(cls, alias, col):
                 return getattr(alias.c, ("%s_%s_%s" % (cls.__module__.replace('.', '_'), cls.__name__, col)).lower())
             get_column_from_alias = classmethod(get_column_from_alias)
@@ -186,7 +159,7 @@ class Table(Webwidgets.Table):
             return self.session.db.query(self.DBModel).filter(self.DBModel.id == row_id)[0]
 
         def get_row_id(self, row):
-            return str(row['id'])
+            return str(row.id)
 
         def get_pages(self):
             return int(math.ceil(float(self.get_row_query(True, {}).count()) / self.rows_per_page))
