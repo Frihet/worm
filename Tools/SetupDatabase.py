@@ -43,11 +43,14 @@ if 'help' in options:
     sys.exit(0)
 
 if 'drop' in options:
+    print "DROPPING ALL TABLES"
     elixir.drop_all(bind=model.engine)
 
 if 'schema' in options or 'all' in options:
+    print "CREATING TABLES"
     elixir.create_all(bind=model.engine)
 
 if 'data' in options or 'all' in options:
+    print "INSERTING ORIGINAL DATA"
     with model.engine.Session() as session:
         model.createInitialData(session, *options, **kws)

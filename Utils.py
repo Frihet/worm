@@ -32,7 +32,8 @@ False_ = sqlalchemy.sql.text("(1 = 2)")
 def create_engine(url):
     engine = sqlalchemy.create_engine(url)
     engine.session_arguments = {'autoflush': False,
-                                'transactional': True}
+                                'transactional': True,
+                                }
     def sessions(**kws):
         real_kws = {}
         real_kws.update(engine.session_arguments)

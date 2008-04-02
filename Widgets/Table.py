@@ -76,8 +76,8 @@ class Table(Webwidgets.Table):
                 return getattr(alias.c, ("%s_%s_%s" % (cls.__module__.replace('.', '_'), cls.__name__, col)).lower())
             get_column_from_alias = classmethod(get_column_from_alias)
     
-    class RowFilters(Webwidgets.Table.RowFilters):
-        WwFilters = Webwidgets.Table.RowFilters.WwFilters + ['SQLAlchemyFilter']
+    class RowsFilters(Webwidgets.Table.RowsFilters):
+        WwFilters = Webwidgets.Table.RowsFilters.WwFilters + ['SQLAlchemyFilter']
 
     class SQLAlchemyFilter(Webwidgets.Filter):
         non_memory_storage = True
