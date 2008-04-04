@@ -5,7 +5,20 @@ class BaseModel(object):
     """This class extends SQLAlchemy models with some extra utility
     methods, and provides widgets for editing the database fields of
     the model."""
-    
+
+    def __unicode__(self):
+        if hasattr(self, 'title'):
+            return unicode(self.title)
+        return repr(self)
+
+    def __str__(self):
+        return str(unicode(self))    
+
+    def __repr__(self):
+        return "<%s.%s%s>" % (type(self).__module__, type(self).__name__,
+                              ','.join(["\n %s=%s" % (name, unicode(getattr(self, name)))
+                                        for (name, col) in self.get_columns().iteritems()]))
+        
     def get_columns(cls):
         return dict([(key, col)
                      for (key, col) in [(key, getattr(cls, key))
