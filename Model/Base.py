@@ -1,5 +1,5 @@
 import Webwidgets
-import Worm.Widgets.Input, sqlalchemy
+import sqlalchemy
 
 class BaseModel(object):
     """This class extends SQLAlchemy models with some extra utility
@@ -62,19 +62,19 @@ class BaseModel(object):
             if cls.column_is_scalar(cls_member):
                 subtype = cls.get_column_subtype(cls_member)
                 if isinstance(subtype, sqlalchemy.types.Boolean):
-                    return Worm.Widgets.Input.DBFieldEditor.derive(Webwidgets.Checkbox)
+                    return Webwidgets.Checkbox
                 elif isinstance(subtype, sqlalchemy.types.Unicode):
-                    return Worm.Widgets.Input.DBFieldEditor.derive(Webwidgets.StringInput)
+                    return Webwidgets.StringInput
                 elif isinstance(subtype, sqlalchemy.types.String):
-                    return Worm.Widgets.Input.DBFieldEditor.derive(Webwidgets.StringInput)
+                    return Webwidgets.StringInput
                 elif isinstance(subtype, sqlalchemy.types.DateTime):
-                    return Worm.Widgets.Input.DBFieldEditor.derive(Webwidgets.DateInput)
+                    return Webwidgets.DateInput
                 elif isinstance(subtype, sqlalchemy.types.Date):
-                    return Worm.Widgets.Input.DBFieldEditor.derive(Webwidgets.DateInput)
+                    return Webwidgets.DateInput
                 elif isinstance(subtype, sqlalchemy.types.Integer):
-                    return Worm.Widgets.Input.DBFieldEditor.derive(Webwidgets.IntegerInput)
+                    return Webwidgets.IntegerInput
                 elif isinstance(subtype, sqlalchemy.types.Float):
-                    return Worm.Widgets.Input.DBFieldEditor.derive(Webwidgets.FloatInput)
+                    return Webwidgets.FloatInput
             else:
                 return None
     get_column_input_widget = classmethod(get_column_input_widget)
@@ -89,8 +89,8 @@ class BaseModel(object):
 
     def get_column_input_widget_instances(self, session, win_id):
         return dict([(name, widget(session, win_id,
-                                   name_map = {'value': name},
-                                   ww_model = self))
+                                   ww_model = Webwidgets.RenameWrapper(name_map = {'value': name},
+                                                                       ww_model = self).ww_filter))
                      for (name, widget) in self.get_column_input_widgets().iteritems()])
     
     def copy(self):
