@@ -76,8 +76,8 @@ class BaseModel(object):
 
     def get_column_input_widget_instances(self, session, win_id):
         return dict([(name, widget(session, win_id,
-                                   name = name,
-                                   row = self))
+                                   name_map = {'value': name},
+                                   ww_model = self))
                      for (name, widget) in self.get_column_input_widgets().iteritems()])
     
     def copy(self):

@@ -62,7 +62,7 @@ class Table(Webwidgets.Table):
                 expand_tree = self.get_expand_tree()
                 query = self.session.db.query(self.DBModel)
                 if self.db_where is not None:
-                    query = query.filter(db_where)
+                    query = query.filter(self.db_where)
 
                 # We need a complete ordering, so that the sorting is
                 # deterministic and stable over reloads...

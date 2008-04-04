@@ -1,9 +1,13 @@
 import Webwidgets
 
 class DBFieldEditor(Webwidgets.ValueInput):
-    def __init__(self, *arg, **kw):
-        super(DBFieldEditor, self).__init__(*arg, **kw)
-        self.value = getattr(self.row, self.name)
-        
-    def save(self):
-        setattr(self.row, self.name, self.value)
+    WwFilters = ['RenameFilter']
+    
+    class RenameFilter(Webwidgets.Filter):
+        def __getattr__(self, name):
+            #print "GETATTR %s -> %s:%s" % (name, self.object.ww_model, self.ww_filter.name_map.get(name, name))
+            return getattr(self.ww_filter, self.ww_filter.name_map.get(name, name))
+            
+        def __setattr__(self, name, value):
+            #print "SETATTR %s -> %s:%s = %s" % (name, self.object.ww_model, self.ww_filter.name_map.get(name, name), value)
+            setattr(self.ww_filter, self.ww_filter.name_map.get(name, name), value)
