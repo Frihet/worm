@@ -80,3 +80,10 @@ class BaseModel(object):
                                    row = self))
                      for (name, widget) in self.get_column_input_widgets().iteritems()])
     
+    def copy(self):
+        return type(self)(**dict([(name, getattr(self, name))
+                                  for (name, col) in self.get_columns().iteritems()
+                                  if not (    isinstance(col.comparator.prop, sqlalchemy.orm.properties.ColumnProperty)
+                                          and col.comparator.prop.columns
+                                           and (   col.comparator.prop.columns[0].foreign_keys
+                                                or col.comparator.prop.columns[0].primary_key))]))
