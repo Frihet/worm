@@ -21,7 +21,7 @@
 # USA
 
 import Webwidgets
-import Worm.Utils, math, sqlalchemy.sql, itertools, types
+import Worm.Utils, Worm.Model.Base, math, sqlalchemy.sql, itertools, types
 
 class Table(Webwidgets.Table):
     debug_queries = False
@@ -33,7 +33,7 @@ class Table(Webwidgets.Table):
         prior to any sorting, expansion etc. It can be any SQLAlchemy
         SQL Expression expression."""
         
-        class DBModel(object):
+        class DBModel(Worm.Model.Base.BaseModel):
             """This is the database model used by the table. This
             class must be subclassed and mapped using SQLAlchemy. It
             requires the mapped table to be available in the table
@@ -43,7 +43,7 @@ class Table(Webwidgets.Table):
             def __getattr__(self, name):
                 if name == "ww_row_id":
                     return self.id
-                raise AttributeError
+                raise AttributeError(self, name)
 
             def get_column_from_alias(cls, alias, col):
                 return getattr(alias.c, ("%s_%s_%s" % (cls.__module__.replace('.', '_'), cls.__name__, col)).lower())
