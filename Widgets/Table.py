@@ -216,8 +216,9 @@ class ReadonlyTable(Webwidgets.Table):
                     return self.pre_rows[int(row_id[4:])]
                 elif row_id.startswith("post_"):
                     return self.post_rows[int(row_id[5:])]
-                else: # elif row_id.startswith("dyn_"):
+                elif row_id.startswith("dyn_"):
                     return self.ww_filter.get_row_by_id(row_id[4:])
+                raise Exception("Invalid row-id %s (should have started with 'pre_', 'post_' or 'dyn_')" % row_id)
                 
             def get_row_id(self, row):
                 if row in self.pre_rows:
@@ -285,8 +286,6 @@ class Table(ReadonlyTable):
             self.pre_rows.append(self.DBModel(ww_is_new = True))
 
     class RowsFilters(ReadonlyTable.RowsFilters):
-        WwFilters = ["TableEditableFilter"] + ReadonlyTable.RowsFilters.WwFilters
-
         class TableEditableFilter(Webwidgets.Filter):
             def get_rows(self, output_options):
                 res = []
@@ -302,7 +301,7 @@ class Table(ReadonlyTable):
                 return res
 
             def field_input_edit_function(self, path, string_value):
-                row = self.get_row_by_id(string_value)
+                row = self.object.ww_filter.get_row_by_id(string_value)
                 function = path[0]	
                 if function == "edit":
                     row.ww_filter.edit()
@@ -318,6 +317,9 @@ class Table(ReadonlyTable):
 
             def get_active_edit_function(self, path):
                 return self.session.AccessManager(Webwidgets.Constants.EDIT, self.win_id, self.path + ['edit'] + path)
+
+        WwFilters = [TableEditableFilter] + ReadonlyTable.RowsFilters.WwFilters
+
 
 class ExpandableTable(Table):
     class RowsFilters(Table.RowsFilters):
