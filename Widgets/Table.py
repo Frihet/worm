@@ -23,6 +23,43 @@
 import Webwidgets
 import Worm.Utils, Worm.Model.Base, math, sqlalchemy.sql, itertools, types
 
+
+class EditFunctionCell(Webwidgets.FunctionCell):
+    html_class = ['edit_function_col']
+
+    input_path = ['edit']
+
+    edit_function_titles = {'edit': 'Edit',
+                            'save': 'Save',
+                            'revert': 'Revert',
+                            'delete': 'Delete'}
+
+    def draw_edit_function(self, table, row_id, is_editing, active, output_options):
+        if is_editing:
+            functions = ('save', 'revert', 'delete')
+        else:
+            functions = ('edit', 'delete')
+            
+        res = ''
+        for function in functions:
+            res += self.draw_function(table,
+                                      row_id, row_id,
+                                      ['edit_function', function],
+                                      function,
+                                      self.edit_function_titles[function],
+                                      active, output_options)
+        return res
+    
+    def draw_cell(self, output_options, row, table, row_num, column_name, rowspan, colspan, first_level, last_level):
+        row_id = table.ww_filter.get_row_id(row)
+        return self.draw_edit_function(table, row_id,
+                                       row.ww_filter.is_editing(),
+                                       table.get_active(table.path + ['_', 'edit_function']),
+                                       output_options)
+
+EditFunctionCellInstance = EditFunctionCell()
+
+
 class ReadonlyTable(Webwidgets.Table):
     debug_queries = False
     debug_expand_info = False
@@ -204,6 +241,9 @@ class Table(ReadonlyTable):
             def is_new(self):
                 return getattr(self, 'ww_is_new', False)
 
+            def is_editing(self):
+                return self.edit_widgets != {}
+
             def edit(self):
                 if self.edit_widgets: return
                 self.new_version = self.object.ww_model
@@ -240,17 +280,41 @@ class Table(ReadonlyTable):
                     return self.edit_widgets[name]
                 return getattr(self.ww_filter, name)
 
-    def function(self, path, function, row_id):
-        row = self.ww_filter.get_row_by_id(row_id)
-        if function == "edit":
-            row.ww_filter.edit()
-        elif function == "revert":
-            row.ww_filter.revert()
-        elif function == "save":
-            row.ww_filter.save()
-        elif function == "delete":
-            row.ww_filter.delete()
-
     def group_function(self, path, function):
         if function == "new":
             self.pre_rows.append(self.DBModel(ww_is_new = True))
+
+    class RowsFilters(ReadonlyTable.RowsFilters):
+        WwFilters = ["TableEditableFilter"] + ReadonlyTable.RowsFilters.WwFilters
+
+        class TableEditableFilter(Webwidgets.Filter):
+            def get_rows(self, output_options):
+                res = []
+                for row in self.ww_filter.get_rows(output_options):
+                    row.edit_function_col = EditFunctionCellInstance
+                    res.append(row)
+                return res
+
+            def get_columns(self, output_options, only_sortable = False):
+                if only_sortable: return self.ww_filter.get_columns(output_options)
+                res = Webwidgets.Utils.OrderedDict(edit_function_col = {"title": ''})
+                res.update(self.ww_filter.get_columns(output_options))
+                return res
+
+            def field_input_edit_function(self, path, string_value):
+                row = self.get_row_by_id(string_value)
+                function = path[0]	
+                if function == "edit":
+                    row.ww_filter.edit()
+                elif function == "revert":
+                    row.ww_filter.revert()
+                elif function == "save":
+                    row.ww_filter.save()
+                elif function == "delete":
+                    row.ww_filter.delete()
+                    
+            def field_output_edit_function(self, path):
+                return []
+
+            def get_active_edit_function(self, path):
+                return self.session.AccessManager(Webwidgets.Constants.EDIT, self.win_id, self.path + ['edit'] + path)
