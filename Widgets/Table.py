@@ -23,7 +23,7 @@
 import Webwidgets
 import Worm.Utils, Worm.Model.Base, math, sqlalchemy.sql, itertools, types
 
-class Table(Webwidgets.Table):
+class ReadonlyTable(Webwidgets.Table):
     debug_queries = False
     debug_expand_info = False
 
@@ -189,3 +189,68 @@ class Table(Webwidgets.Table):
                     return "post_%s" % (self.post_rows.index(row),)
                 else:
                     return "dyn_%s" % (self.ww_filter.get_row_id(row),)
+
+class Table(ReadonlyTable):
+    class TableRowModelWrapper(ReadonlyTable.TableRowModelWrapper):
+        WwFilters = ["EditingFilter"]
+
+        class EditingFilter(Webwidgets.Filter):
+            def __init__(self, *arg, **kw):
+                Webwidgets.Filter.__init__(self, *arg, **kw)
+                object.__setattr__(self, 'edit_widgets', {})
+                if self.is_new():
+                    self.edit()
+
+            def is_new(self):
+                return getattr(self, 'ww_is_new', False)
+
+            def edit(self):
+                if self.edit_widgets: return
+                self.new_version = self.object.ww_model
+                if not self.is_new():
+                    self.new_version = self.new_version.copy()
+                self.edit_widgets = self.new_version.get_column_input_widget_instances(self.table.session, self.table.win_id)
+                
+            def revert(self):
+                self.edit_widgets = {}
+                if self.is_new():
+                    self.table.pre_rows.remove(self.object.ww_model)
+                    
+            def save(self):
+                if not self.is_new():
+                    self.object.is_current = False
+                self.table.session.db.save(self.new_version)
+                self.table.session.db.flush()
+                self.table.session.db.commit()
+                self.table.ww_filter.reread()
+                self.revert()
+                self.new_version.ww_is_new = False
+
+            def delete(self):
+                if self.is_new():
+                    self.revert()
+                else:
+                    self.object.is_current = False
+                    self.table.session.db.flush()
+                    self.table.session.db.commit()
+                    self.table.ww_filter.reread()
+
+            def __getattr__(self, name):
+                if name in self.edit_widgets:
+                    return self.edit_widgets[name]
+                return getattr(self.ww_filter, name)
+
+    def function(self, path, function, row_id):
+        row = self.ww_filter.get_row_by_id(row_id)
+        if function == "edit":
+            row.ww_filter.edit()
+        elif function == "revert":
+            row.ww_filter.revert()
+        elif function == "save":
+            row.ww_filter.save()
+        elif function == "delete":
+            row.ww_filter.delete()
+
+    def group_function(self, path, function):
+        if function == "new":
+            self.pre_rows.append(self.DBModel(ww_is_new = True))
