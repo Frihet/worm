@@ -229,7 +229,7 @@ class ReadonlyTable(Webwidgets.Table):
 
 class Table(ReadonlyTable):
     class TableRowModelWrapper(ReadonlyTable.TableRowModelWrapper):
-        WwFilters = ["EditingFilter"]
+        WwFilters = ["EditingFilter"] + ReadonlyTable.TableRowModelWrapper.WwFilters
 
         class EditingFilter(Webwidgets.Filter):
             def __init__(self, *arg, **kw):
@@ -296,9 +296,9 @@ class Table(ReadonlyTable):
                 return res
 
             def get_columns(self, output_options, only_sortable = False):
-                if only_sortable: return self.ww_filter.get_columns(output_options)
+                if only_sortable: return self.ww_filter.get_columns(output_options, only_sortable)
                 res = Webwidgets.Utils.OrderedDict(edit_function_col = {"title": ''})
-                res.update(self.ww_filter.get_columns(output_options))
+                res.update(self.ww_filter.get_columns(output_options, only_sortable))
                 return res
 
             def field_input_edit_function(self, path, string_value):
@@ -318,3 +318,7 @@ class Table(ReadonlyTable):
 
             def get_active_edit_function(self, path):
                 return self.session.AccessManager(Webwidgets.Constants.EDIT, self.win_id, self.path + ['edit'] + path)
+
+class ExpandableTable(Table):
+    class RowsFilters(Table.RowsFilters):
+        WwFilters = [Webwidgets.TableExpandableFilter] + Table.RowsFilters.WwFilters
