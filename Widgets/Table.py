@@ -318,9 +318,9 @@ class Table(ReadonlyTable):
             def get_active_edit_function(self, path):
                 return self.session.AccessManager(Webwidgets.Constants.EDIT, self.win_id, self.path + ['edit'] + path)
 
-        WwFilters = [TableEditableFilter] + ReadonlyTable.RowsFilters.WwFilters
+        WwFilters = ["TableEditableFilter"] + ReadonlyTable.RowsFilters.WwFilters
 
 
-class ExpandableTable(Table):
-    class RowsFilters(Table.RowsFilters):
-        WwFilters = [Webwidgets.TableExpandableFilter] + Table.RowsFilters.WwFilters
+class ExpandableTable(Table, Webwidgets.ExpandableTable):
+    class RowsFilters(Table.RowsFilters, Webwidgets.ExpandableTable.RowsFilters):
+        WwFilters = ["TableExpandableFilter"] + Table.RowsFilters.WwFilters
