@@ -196,7 +196,7 @@ class ReadonlyTable(Webwidgets.Table):
                 return list(self.get_row_query(all, output_options))
 
             def get_row_by_id(self, row_id):
-                return self.session.db.query(self.DBModel).filter(self.DBModel.id == row_id)[0]
+                return self.session.db.query(self.DBModel).filter(self.DBModel.id == int(row_id))[0]
 
             def get_row_id(self, row):
                 return str(row.id)
