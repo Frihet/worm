@@ -17,50 +17,72 @@ class BaseModel(object):
     def __repr__(self):
         return "<%s.%s%s>" % (type(self).__module__, type(self).__name__,
                               ','.join(["\n %s=%s" % (name, unicode(getattr(self, name)))
-                                        for (name, col) in self.get_columns().iteritems()]))
+                                        for name in self.get_column_names()]))
         
-    def get_columns(cls):
-        return dict([(key, col)
-                     for (key, col) in [(key, getattr(cls, key))
-                                        for key in dir(cls)]
-                     if hasattr(col, 'impl') and isinstance(col.impl, sqlalchemy.orm.attributes.AttributeImpl)])
+    def get_columns(cls, exclude_primary_keys = False, exclude_foreign_keys = False):
+        return [(name, col)
+                for (name, col) in [(name, getattr(cls, name))
+                                    for name in dir(cls)]
+                if (# Filter out non-column attributes
+                        hasattr(col, 'impl')
+                    and isinstance(col.impl, sqlalchemy.orm.attributes.AttributeImpl)
+
+                    # Filter out primary and foreign keys, if requested
+                    and not (isinstance(col.comparator.prop, sqlalchemy.orm.properties.ColumnProperty)
+                             and col.comparator.prop.columns
+                             and (   (exclude_foreign_keys and col.comparator.prop.columns[0].foreign_keys)
+                                  or (exclude_primary_keys and col.comparator.prop.columns[0].primary_key))))]
     get_columns = classmethod(get_columns)
 
-    def column_is_scalar(cls, cls_member):
+    def get_column_names(cls, *arg, **kw):
+        return [name
+                for (name, col) in cls.get_columns(*arg, **kw)]
+    get_column_names = classmethod(get_column_names)
+
+    def get_column_instances(self, *arg, **kw):
+        return [(name, getattr(self, name))
+                for name in self.get_column_names(*arg, **kw)]
+
+    def column_is_scalar(cls, name):
+        cls_member = getattr(cls, name)
         return isinstance(cls_member.impl, (sqlalchemy.orm.attributes.ScalarAttributeImpl,
                                             sqlalchemy.orm.attributes.ScalarObjectAttributeImpl))
     column_is_scalar = classmethod(column_is_scalar)
 
-    def column_is_foreign(cls, cls_member):
+    def column_is_foreign(cls, name):
+        cls_member = getattr(cls, name)
         return isinstance(cls_member.impl, (sqlalchemy.orm.attributes.ScalarObjectAttributeImpl,
                                             sqlalchemy.orm.attributes.CollectionAttributeImpl))
     column_is_foreign = classmethod(column_is_foreign)
 
-    def get_column_subtype(cls, cls_member):
+    def get_column_subtype(cls, name):
+        cls_member = getattr(cls, name)
         # Yes, this sucks, it is icky, but it's the only way to get at it
         # :(
         return cls_member.impl.is_equal.im_self
     get_column_subtype = classmethod(get_column_subtype)
 
-    def get_column_foreign_class(cls, cls_member):
+    def get_column_foreign_class(cls, name):
         """This fetches the foreign key-pointed-to class for a column
         given the class member. The class member should be of one of the
         two types sqlalchemy.orm.attributes.ScalarObjectAttributeImpl and
         sqlalchemy.orm.attributes.CollectionAttributeImpl"""
+        cls_member = getattr(cls, name)
         # Yes, this sucks, it is icky, but it's the only way to get at it
         # :(
         return cls_member.impl.callable_.im_self.mapper.class_
     get_column_foreign_class = classmethod(get_column_foreign_class)
 
-    def get_column_input_widget(cls, cls_member):
-        if cls.column_is_foreign(cls_member):
-            if cls.column_is_scalar(cls_member):
+
+    def get_column_input_widget(cls, name):
+        if cls.column_is_foreign(name):
+            if cls.column_is_scalar(name):
                 return None
             else:
                 return None
         else:
-            if cls.column_is_scalar(cls_member):
-                subtype = cls.get_column_subtype(cls_member)
+            if cls.column_is_scalar(name):
+                subtype = cls.get_column_subtype(name)
                 if isinstance(subtype, sqlalchemy.types.Boolean):
                     return Webwidgets.Checkbox
                 elif isinstance(subtype, sqlalchemy.types.Unicode):
@@ -81,22 +103,26 @@ class BaseModel(object):
 
     def get_column_input_widgets(cls):
         return dict([(name, widget)
-                     for (name, widget) in [(key, cls.get_column_input_widget(col))
-                                            for (key, col) in
-                                            cls.get_columns().iteritems()]
+                     for (name, widget) in [(name, cls.get_column_input_widget(name))
+                                            for name in
+                                            cls.get_column_names()]
                      if widget is not None])
     get_column_input_widgets = classmethod(get_column_input_widgets)
 
+
+    def get_column_input_widget_instance(self, session, win_id, name):
+        widget = self.get_column_input_widget(name)
+        if widget is None: return None
+        return widget(session, win_id,
+                      ww_model = Webwidgets.RenameWrapper(name_map = {'value': name},
+                                                          ww_model = self).ww_filter)    
+
     def get_column_input_widget_instances(self, session, win_id):
-        return dict([(name, widget(session, win_id,
-                                   ww_model = Webwidgets.RenameWrapper(name_map = {'value': name},
-                                                                       ww_model = self).ww_filter))
-                     for (name, widget) in self.get_column_input_widgets().iteritems()])
-    
+        return dict([(name, self.get_column_input_widget_instance(session, win_id, name))
+                     for name in self.get_column_names()])
+
+
     def copy(self):
-        return type(self)(**dict([(name, getattr(self, name))
-                                  for (name, col) in self.get_columns().iteritems()
-                                  if not (    isinstance(col.comparator.prop, sqlalchemy.orm.properties.ColumnProperty)
-                                          and col.comparator.prop.columns
-                                           and (   col.comparator.prop.columns[0].foreign_keys
-                                                or col.comparator.prop.columns[0].primary_key))]))
+        return type(self)(**dict(self.get_column_instances(
+            exclude_primary_keys = True,
+            exclude_foreign_keys = True)))
