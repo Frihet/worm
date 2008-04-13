@@ -45,7 +45,6 @@ def create_engine(url):
 
             def __exit__(self, type, value, traceback):
                 if type is None and value is None and traceback is None:
-                    self.flush()
                     self.commit()
                 else:
                     self.rollback()

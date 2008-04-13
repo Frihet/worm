@@ -229,6 +229,9 @@ class ReadonlyTable(Webwidgets.Table, Worm.Widgets.Base.Widget):
                     return "dyn_%s" % (self.ww_filter.get_row_id(row),)
 
 class Table(ReadonlyTable):
+    # ('edit_group_function', {'level': 1})
+
+    
     class TableRowModelWrapper(ReadonlyTable.TableRowModelWrapper):
         WwFilters = ["EditingFilter"] + ReadonlyTable.TableRowModelWrapper.WwFilters
 
@@ -282,9 +285,21 @@ class Table(ReadonlyTable):
                     return self.edit_widgets[name]
                 return getattr(self.ww_filter, name)
 
-    def group_function(self, path, function):
-        if function == "new":
+    def field_input_edit_group_function(self, path, string_value):
+        if path[0] == "new":
             self.pre_rows.append(self.DBModel(ww_is_new = True))
+
+    def field_output_edit_group_function(self, path):
+        return []
+    
+    def draw_edit_group_function(self, config, output_options):
+        return True, self.draw_group_function(['edit_group_function', "new"],
+                                              "new",
+                                              "Add new",
+                                              output_options)
+
+    def get_active_edit_group_function(self, path):
+        return self.session.AccessManager(Webwidgets.Constants.EDIT, self.win_id, self.path + ['edit_group_function'] + path)
 
     class RowsFilters(ReadonlyTable.RowsFilters):
         class TableEditableFilter(Webwidgets.Filter):
@@ -293,12 +308,6 @@ class Table(ReadonlyTable):
                 for row in self.ww_filter.get_rows(output_options):
                     row.edit_function_col = EditFunctionCellInstance
                     res.append(row)
-                return res
-
-            def get_columns(self, output_options, only_sortable = False):
-                if only_sortable: return self.ww_filter.get_columns(output_options, only_sortable)
-                res = Webwidgets.Utils.OrderedDict(edit_function_col = {"title": ''})
-                res.update(self.ww_filter.get_columns(output_options, only_sortable))
                 return res
 
             def field_input_edit_function(self, path, string_value):
