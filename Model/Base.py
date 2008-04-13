@@ -34,14 +34,19 @@ class BaseModel(object):
                                   or (exclude_primary_keys and col.comparator.prop.columns[0].primary_key))))]
     get_columns = classmethod(get_columns)
 
+    def get_columns_and_instances(self, *arg, **kw):
+        return [(name, col, getattr(self, name))
+                for (name, col) in self.get_columns(*arg, **kw)]
+
+    def get_column_instances(self, *arg, **kw):
+        return [(name, value)
+                for (name, col, value) in self.get_columns_and_instances(*arg, **kw)]
+
     def get_column_names(cls, *arg, **kw):
         return [name
                 for (name, col) in cls.get_columns(*arg, **kw)]
     get_column_names = classmethod(get_column_names)
 
-    def get_column_instances(self, *arg, **kw):
-        return [(name, getattr(self, name))
-                for name in self.get_column_names(*arg, **kw)]
 
     def column_is_scalar(cls, name):
         cls_member = getattr(cls, name)
@@ -73,6 +78,13 @@ class BaseModel(object):
         return cls_member.impl.callable_.im_self.mapper.class_
     get_column_foreign_class = classmethod(get_column_foreign_class)
 
+    def get_column_foreign_column(cls, name):
+        cls_member = getattr(cls, name)
+        for ext in cls_member.impl.extensions:
+            if isinstance(ext, sqlalchemy.orm.attributes.GenericBackrefExtension):
+                return ext.key
+        raise Exception("Column does not have a back-ref column in foreign table")
+    get_column_foreign_column = classmethod(get_column_foreign_column)
 
     def get_column_input_widget(cls, name):
         if cls.column_is_foreign(name):
@@ -122,7 +134,19 @@ class BaseModel(object):
                      for name in self.get_column_names()])
 
 
-    def copy(self):
-        return type(self)(**dict(self.get_column_instances(
-            exclude_primary_keys = True,
-            exclude_foreign_keys = True)))
+    def copy(self, override = {}, copy_foreign = True):
+        res = {}
+        for name, value in self.get_column_instances(exclude_primary_keys = True,
+                                                     exclude_foreign_keys = True):
+            if name in override:
+                res[name] = override[name]
+            else:
+                if self.column_is_foreign(name) and not self.column_is_scalar(name):
+                    if copy_foreign:
+                        res[name] = [foreign.copy(override = {self.get_column_foreign_column(name):None})
+                                     for foreign in value]
+                    else:
+                        res[name] = []
+                else:
+                    res[name] = value
+        return type(self)(**res)

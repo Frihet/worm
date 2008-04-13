@@ -21,7 +21,7 @@
 # USA
 
 import Webwidgets
-import Worm.Utils, Worm.Model.Base, math, sqlalchemy.sql, itertools, types
+import Worm.Utils, Worm.Model.Base, Worm.Widgets.Base, math, sqlalchemy.sql, itertools, types
 
 
 class EditFunctionCell(Webwidgets.FunctionCell):
@@ -60,7 +60,7 @@ class EditFunctionCell(Webwidgets.FunctionCell):
 EditFunctionCellInstance = EditFunctionCell()
 
 
-class ReadonlyTable(Webwidgets.Table):
+class ReadonlyTable(Webwidgets.Table, Worm.Widgets.Base.Widget):
     debug_queries = False
     debug_expand_info = False
 
@@ -247,22 +247,22 @@ class Table(ReadonlyTable):
 
             def edit(self):
                 if self.edit_widgets: return
-                self.new_version = self.object.ww_model
+                self.edit_session = self.table.session.db.bind.Session()                
+                self.new_version = old_version = self.edit_session.merge(self.object.ww_model)
                 if not self.is_new():
                     self.new_version = self.new_version.copy()
+                    self.edit_session.save(self.new_version)
+                    old_version.is_current = False
                 self.edit_widgets = self.new_version.get_column_input_widget_instances(self.table.session, self.table.win_id)
                 
             def revert(self):
+                self.edit_session.close()
                 self.edit_widgets = {}
                 if self.is_new():
                     self.table.pre_rows.remove(self.object.ww_model)
                     
             def save(self):
-                if not self.is_new():
-                    self.object.is_current = False
-                self.table.session.db.save(self.new_version)
-                self.table.session.db.flush()
-                self.table.session.db.commit()
+                self.edit_session.commit()
                 self.table.ww_filter.reread()
                 self.revert()
                 self.new_version.ww_is_new = False
@@ -272,7 +272,6 @@ class Table(ReadonlyTable):
                     self.revert()
                 else:
                     self.object.is_current = False
-                    self.table.session.db.flush()
                     self.table.session.db.commit()
                     self.table.ww_filter.reread()
 

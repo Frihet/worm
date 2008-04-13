@@ -31,14 +31,15 @@ False_ = sqlalchemy.sql.text("(1 = 2)")
 
 def create_engine(url):
     engine = sqlalchemy.create_engine(url)
-    engine.session_arguments = {'autoflush': False,
+    engine.session_arguments = {'autoflush': True,
                                 'transactional': True,
                                 }
     def sessions(**kws):
         real_kws = {}
         real_kws.update(engine.session_arguments)
         real_kws.update(kws)
-        class Session(sqlalchemy.orm.sessionmaker(bind=engine, **real_kws)):
+        BaseSession = sqlalchemy.orm.sessionmaker(bind=engine, **real_kws)
+        class Session(BaseSession):
             def __enter__(self):
                 return self
 
@@ -49,6 +50,20 @@ def create_engine(url):
                 else:
                     self.rollback()
                 self.close()
+
+            def save(self, obj):
+                BaseSession.save(self, obj)
+                return  obj
+                
+            def expire(self, obj):
+                BaseSession.expire(self, obj)
+                return  obj
+                
+            def save_and_expire(self, obj):
+                self.save(obj)
+                self.flush()
+                return self.expire(obj)
+            
         return Session
     engine.sessions = sessions
     engine.Session = sessions()
