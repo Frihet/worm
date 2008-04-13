@@ -127,7 +127,8 @@ class BaseModel(object):
         if widget is None: return None
         return widget(session, win_id,
                       ww_model = Webwidgets.RenameWrapper(name_map = {'value': name},
-                                                          ww_model = self).ww_filter)    
+                                                          ww_model = self).ww_filter,
+                      multiple = False)    
 
     def get_column_input_widget_instances(self, session, win_id):
         return dict([(name, self.get_column_input_widget_instance(session, win_id, name))

@@ -50,7 +50,7 @@ class EditFunctionCell(Webwidgets.FunctionCell):
                                       active, output_options)
         return res
     
-    def draw_cell(self, output_options, row, table, row_num, column_name, rowspan, colspan, first_level, last_level):
+    def draw_table_cell(self, output_options, row, table, row_num, column_name, rowspan, colspan, first_level, last_level):
         row_id = table.ww_filter.get_row_id(row)
         return self.draw_edit_function(table, row_id,
                                        row.ww_filter.is_editing(),
