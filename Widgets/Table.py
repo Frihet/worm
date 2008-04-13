@@ -303,9 +303,9 @@ class Table(ReadonlyTable):
 
     class RowsFilters(ReadonlyTable.RowsFilters):
         class TableEditableFilter(Webwidgets.Filter):
-            def get_rows(self, output_options):
+            def get_rows(self, all, output_options):
                 res = []
-                for row in self.ww_filter.get_rows(output_options):
+                for row in self.ww_filter.get_rows(all, output_options):
                     row.edit_function_col = EditFunctionCellInstance
                     res.append(row)
                 return res
