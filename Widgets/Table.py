@@ -248,8 +248,10 @@ class Table(ReadonlyTable):
             def edit(self):
                 if self.edit_widgets: return
                 self.edit_session = self.table.session.db.bind.Session()                
-                self.new_version = old_version = self.edit_session.merge(self.object.ww_model)
-                if not self.is_new():
+                if self.is_new():
+                    self.new_version = old_version = self.edit_session.save_and_expire(self.object.ww_model)
+                else:
+                    self.new_version = old_version = self.edit_session.merge(self.object.ww_model)
                     self.new_version = self.new_version.copy()
                     self.edit_session.save(self.new_version)
                     old_version.is_current = False
