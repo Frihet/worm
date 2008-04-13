@@ -89,7 +89,7 @@ class ReadonlyTable(Webwidgets.Table, Worm.Widgets.Base.Widget):
         pre_rows = []
         post_rows = []
     
-    class SourceFilters(Webwidgets.Table.RowsFilters):
+    class SourceFilters(Webwidgets.Table.SourceFilters):
         WwFilters = Webwidgets.Table.SourceFilters.WwFilters + ['SQLAlchemyFilter']
 
         class SQLAlchemyFilter(Webwidgets.Filter):
@@ -232,8 +232,8 @@ class Table(ReadonlyTable):
     # ('edit_group_function', {'level': 1})
 
     
-    class TableRowModelWrapper(ReadonlyTable.TableRowModelWrapper):
-        WwFilters = ["EditingFilter"] + ReadonlyTable.TableRowModelWrapper.WwFilters
+    class RowsRowModelWrapper(ReadonlyTable.RowsRowModelWrapper):
+        WwFilters = ["EditingFilter"] + ReadonlyTable.RowsRowModelWrapper.WwFilters
 
         class EditingFilter(Webwidgets.Filter):
             def __init__(self, *arg, **kw):
