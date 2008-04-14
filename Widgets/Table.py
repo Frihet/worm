@@ -133,6 +133,7 @@ class Table(ReadonlyTable):
                 return getattr(self.ww_filter, name)
 
     def field_input_edit_group_function(self, path, string_value):
+        if string_value == '': return
         if path[0] == "new":
             self.pre_rows.append(self.DBModel(ww_is_new = True))
 
@@ -158,6 +159,7 @@ class Table(ReadonlyTable):
                 return res
 
             def field_input_edit_function(self, path, string_value):
+                if string_value == '': return
                 row = self.object.ww_filter.get_row_by_id(string_value)
                 function = path[0]	
                 if function == "edit":
