@@ -96,7 +96,7 @@ class Table(ReadonlyTable):
 
             def edit(self):
                 if self.edit_widgets: return
-                self.edit_session = self.table.session.db.bind.Session()                
+                self.edit_session = self.table.db_session.bind.Session()
                 if self.is_new():
                     self.new_version = old_version = self.edit_session.save_and_expire(self.object.ww_model)
                 else:
@@ -104,7 +104,8 @@ class Table(ReadonlyTable):
                     self.new_version = self.new_version.copy()
                     self.edit_session.save(self.new_version)
                     old_version.is_current = False
-                self.edit_widgets = self.new_version.get_column_input_widget_instances(self.table.session, self.table.win_id)
+                self.edit_widgets = self.new_version.get_column_input_widget_instances(
+                    self.edit_session, self.table.session, self.table.win_id)
                 
             def revert(self):
                 self.edit_session.close()
@@ -123,7 +124,7 @@ class Table(ReadonlyTable):
                     self.revert()
                 else:
                     self.object.is_current = False
-                    self.table.session.db.commit()
+                    self.table.db_session.commit()
                     self.table.ww_filter.reread()
 
             def __getattr__(self, name):

@@ -87,9 +87,17 @@ class BaseModel(object):
     get_column_foreign_column = classmethod(get_column_foreign_column)
 
     def get_column_input_widget(cls, name):
+        # We can't import this globally, or we'd have a loop in import dependenmcies :S
+        import Worm.Widgets.ListMod
+
         if cls.column_is_foreign(name):
             if cls.column_is_scalar(name):
-                return None
+                foreign = cls.get_column_foreign_class(name)
+                class ForeignInput(Worm.Widgets.ListMod.RowsSingleValueListInput):
+                    class WwModel(Worm.Widgets.ListMod.RowsSingleValueListInput.WwModel):
+                        DBModel = foreign
+                        db_where = foreign.is_current == True
+                return ForeignInput
             else:
                 return None
         else:
@@ -122,16 +130,38 @@ class BaseModel(object):
     get_column_input_widgets = classmethod(get_column_input_widgets)
 
 
-    def get_column_input_widget_instance(self, session, win_id, name):
+    def get_column_input_widget_instance(self, db_session, session, win_id, name):
+        import Worm.Widgets.ListMod
+        model = self
         widget = self.get_column_input_widget(name)
         if widget is None: return None
-        return widget(session, win_id,
-                      ww_model = Webwidgets.RenameWrapper(name_map = {'value': name},
-                                                          ww_model = self).ww_filter,
-                      multiple = False)    
 
-    def get_column_input_widget_instances(self, session, win_id):
-        return dict([(name, self.get_column_input_widget_instance(session, win_id, name))
+        if issubclass(widget, Worm.Widgets.ListMod.RowsSingleValueListInput):
+            class Value(object):
+                def __get__(self, instance, owner):
+                    value = getattr(model, name)
+                    if value is None: return None
+                    return instance.db_session.merge(value)
+                def __set__(self, instance, value):
+                    if value is not None:
+                        value = db_session.merge(value)
+                    setattr(model, name, value)
+        else:
+            class Value(object):
+                def __get__(self, instance, owner):
+                    return getattr(model, name)
+                def __set__(self, instance, value):
+                    setattr(model, name, value)
+
+        class ValueMappedWidget(widget):
+            WwFilters = widget.WwFilters + ["ValueMappedWidgetValueMapper"]
+            class ValueMappedWidgetValueMapper(Webwidgets.Filter):
+                value = Value()
+                
+        return ValueMappedWidget(session, win_id)    
+
+    def get_column_input_widget_instances(self, db_session, session, win_id):
+        return dict([(name, self.get_column_input_widget_instance(db_session, session, win_id, name))
                      for name in self.get_column_names()])
 
 

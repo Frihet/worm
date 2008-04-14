@@ -60,7 +60,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
 
             def get_row_query(self, all, output_options):
                 expand_tree = self.get_expand_tree()
-                query = self.session.db.query(self.DBModel)
+                query = self.db_session.query(self.DBModel)
                 if self.db_where is not None:
                     query = query.filter(self.db_where)
 
@@ -159,7 +159,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 return list(self.get_row_query(all, output_options))
 
             def get_row_by_id(self, row_id):
-                return self.session.db.query(self.DBModel).filter(self.DBModel.id == int(row_id))[0]
+                return self.db_session.query(self.DBModel).filter(self.DBModel.id == int(row_id))[0]
 
             def get_row_id(self, row):
                 return str(row.id)
