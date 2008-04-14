@@ -26,4 +26,5 @@
 # fucks up isinstance()-calls.
 if __name__ == "Worm":
     from Program import *
+    from Widgets.RowsMod import *
     from Widgets.Table import *
