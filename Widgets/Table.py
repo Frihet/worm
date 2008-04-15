@@ -183,3 +183,36 @@ class Table(ReadonlyTable):
 class ExpandableTable(Table, Webwidgets.ExpandableTable):
     class RowsFilters(Table.RowsFilters, Webwidgets.ExpandableTable.RowsFilters):
         WwFilters = ["TableExpandableFilter"] + Table.RowsFilters.WwFilters
+
+class ExpansionEditableTable(ExpandableTable):
+    class RowsRowModelWrapper(Table.RowsRowModelWrapper):
+        WwFilters = ["ExpansionEditingFilter"] + ExpandableTable.RowsRowModelWrapper.WwFilters
+                
+        class ExpansionEditingFilter(Webwidgets.Filter):
+            def __init__(self, *arg, **kw):
+                Webwidgets.Filter.__init__(self, *arg, **kw)
+                if hasattr(self, 'is_expansion'): return
+		self.ww_expansion = {
+                    'is_expansion': True,
+                    'ww_functions': [],
+                    'ww_expanded': self.table.ExpansionViewer(
+                    self.table.session, self.table.win_id,
+                    parent_table = self)}
+                self.ww_expansion['ww_expanded_old_version'] = self.ww_expansion['ww_expanded']
+                if self.is_new():
+                    self.edit_expansion()
+
+            def edit_expansion(self):
+                self.ww_expansion['ww_expanded_old_version'] = self.ww_expansion['ww_expanded']
+                self.ww_expansion['ww_expanded'] = self.table.ExpansionEditor(
+                    self.table.session, self.table.win_id,
+                    edit_session = self.edit_session,
+                    parent_table = self.new_version)
+
+            def edit(self):
+                self.ww_filter.edit()
+                self.edit_expansion()
+            
+            def revert(self):
+                self.ww_filter.revert()
+                self.ww_expansion['ww_expanded'] = self.ww_expansion['ww_expanded_old_version'] 
