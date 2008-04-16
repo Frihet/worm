@@ -53,7 +53,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
         post_rows = []
 
         def __init__(self):
-            Webwidgets.RowsComposite.WwModel.__init__(self)
+            super(RowsComposite.WwModel, self).__init__()
             self.pre_rows = list(self.pre_rows)
             self.post_rows = list(self.post_rows)
     
