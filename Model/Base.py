@@ -178,17 +178,17 @@ class BaseModel(object):
                     if self.get_column_foreign_class(name).column_is_scalar(foreign_name):
                         if copy_foreign:
                             for foreign in value:
+                                res[name].append(foreign.copy(override = {foreign_name:None}))
                                 if hasattr(foreign, "is_current"):
                                     foreign.is_current = False
-                                res[name].append(foreign.copy(override = {foreign_name:None}))
                     elif getattr(self, name + '__ww_is_part_of', False):
                         if copy_foreign:
                             for foreign in value:
-                                if hasattr(foreign, "is_current"):
-                                    foreign.is_current = False
                                 foreign_col = list(getattr(foreign, foreign_name))
                                 foreign_col.remove(self)
                                 res[name].append(foreign.copy(override = {foreign_name:foreign_col}))
+                                if hasattr(foreign, "is_current"):
+                                    foreign.is_current = False
                 else:
                     res[name] = value
         return type(self)(**res)
