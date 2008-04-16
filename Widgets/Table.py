@@ -75,9 +75,6 @@ class ReadonlyTable(Webwidgets.Table, Worm.Widgets.RowsMod.RowsComposite, Worm.W
 
 
 class Table(ReadonlyTable):
-    # ('edit_group_function', {'level': 1})
-
-    
     class RowsRowModelWrapper(ReadonlyTable.RowsRowModelWrapper):
         WwFilters = ["EditingFilter"] + ReadonlyTable.RowsRowModelWrapper.WwFilters
 
