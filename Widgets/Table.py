@@ -100,7 +100,19 @@ class Table(ReadonlyTable):
                 if self.is_new():
                     self.new_version = old_version = self.edit_session.save_and_expire(self.object.ww_model)
                 else:
-                    self.new_version = old_version = self.edit_session.merge(self.object.ww_model)
+                    #### fixme ####
+                    # name = """SQLAlchemy: merge clashes with
+                    # many-to-many"""
+                    # description = """Uggly hack since merge does not
+                    # seem to work when you have many-to-many
+                    # relationships!!! This uggly hack works since the
+                    # object is never changed in the main session, so
+                    # loading it straight from the DB will give the
+                    # right attribute values."""
+                    #### end ####
+                    t = type(self.object.ww_model)
+                    self.new_version = old_version = self.edit_session.query(t).filter(t.id == self.object.ww_model.id)[0]
+                    #self.new_version = old_version = self.edit_session.merge(self.object.ww_model)
                     self.new_version = self.new_version.copy()
                     self.edit_session.save(self.new_version)
                     old_version.is_current = False
