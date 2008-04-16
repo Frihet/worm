@@ -51,6 +51,11 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
 
         pre_rows = []
         post_rows = []
+
+        def __init__(self):
+            Webwidgets.RowsComposite.WwModel.__init__(self)
+            self.pre_rows = list(self.pre_rows)
+            self.post_rows = list(self.post_rows)
     
     class SourceFilters(Webwidgets.RowsComposite.SourceFilters):
         WwFilters = Webwidgets.RowsComposite.SourceFilters.WwFilters + ['SQLAlchemyFilter']

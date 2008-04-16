@@ -64,7 +64,7 @@ class ReadonlyTable(Webwidgets.Table, Worm.Widgets.RowsMod.RowsComposite, Worm.W
     debug_queries = False
     debug_expand_info = False
 
-    class WwModel(Webwidgets.Table.WwModel, Worm.Widgets.RowsMod.RowsComposite.WwModel):
+    class WwModel(Worm.Widgets.RowsMod.RowsComposite.WwModel, Webwidgets.Table.WwModel):
         pass
     
     class SourceFilters(Worm.Widgets.RowsMod.RowsComposite.SourceFilters, Webwidgets.Table.SourceFilters):
