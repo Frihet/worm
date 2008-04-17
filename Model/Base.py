@@ -172,23 +172,33 @@ class BaseModel(object):
             if name in override:
                 res[name] = override[name]
             else:
-                if self.column_is_foreign(name) and not self.column_is_scalar(name):
-                    res[name] = []
+                if self.column_is_foreign(name):
                     foreign_name = self.get_column_foreign_column(name)
-                    if self.get_column_foreign_class(name).column_is_scalar(foreign_name):
-                        if copy_foreign:
-                            for foreign in value:
-                                res[name].append(foreign.copy(override = {foreign_name:None}))
-                                if hasattr(foreign, "is_current"):
-                                    foreign.is_current = False
-                    elif getattr(self, name + '__ww_is_part_of', False):
-                        if copy_foreign:
-                            for foreign in value:
-                                foreign_col = list(getattr(foreign, foreign_name))
+                    if self.column_is_scalar(name):
+                        res[name] = value
+                        if getattr(self, name + '__ww_copy_foregin', False):
+                            if copy_foreign:
+                                foreign_col = list(getattr(value, foreign_name))
                                 foreign_col.remove(self)
-                                res[name].append(foreign.copy(override = {foreign_name:foreign_col}))
-                                if hasattr(foreign, "is_current"):
-                                    foreign.is_current = False
+                                res[name] = value.copy(override = {foreign_name:foreign_col})
+                                if hasattr(value, "is_current"):
+                                    value.is_current = False
+                    else:
+                        res[name] = []
+                        if self.get_column_foreign_class(name).column_is_scalar(foreign_name):
+                            if copy_foreign:
+                                for foreign in value:
+                                    res[name].append(foreign.copy(override = {foreign_name:None}))
+                                    if hasattr(foreign, "is_current"):
+                                        foreign.is_current = False
+                        elif getattr(self, name + '__ww_copy_foregin', False):
+                            if copy_foreign:
+                                for foreign in value:
+                                    foreign_col = list(getattr(foreign, foreign_name))
+                                    foreign_col.remove(self)
+                                    res[name].append(foreign.copy(override = {foreign_name:foreign_col}))
+                                    if hasattr(foreign, "is_current"):
+                                        foreign.is_current = False
                 else:
                     res[name] = value
         return type(self)(**res)
