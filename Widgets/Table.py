@@ -95,7 +95,7 @@ class Table(ReadonlyTable):
                 if self.edit_widgets: return
                 self.edit_session = self.table.db_session.bind.Session()
                 if self.is_new():
-                    self.new_version = old_version = self.edit_session.save_and_expire(self.object.ww_model)
+                    self.new_version = self.edit_session.save_and_expire(self.object.ww_model)
                 else:
                     #### fixme ####
                     # name = """SQLAlchemy: merge clashes with
@@ -107,12 +107,9 @@ class Table(ReadonlyTable):
                     # loading it straight from the DB will give the
                     # right attribute values."""
                     #### end ####
+                    #self.new_version = self.edit_session.merge(self.object.ww_model)
                     t = type(self.object.ww_model)
-                    self.new_version = old_version = self.edit_session.query(t).filter(t.id == self.object.ww_model.id)[0]
-                    #self.new_version = old_version = self.edit_session.merge(self.object.ww_model)
-                    self.new_version = self.new_version.copy()
-                    self.edit_session.save(self.new_version)
-                    old_version.is_current = False
+                    self.new_version = self.edit_session.query(t).filter(t.id == self.object.ww_model.id)[0]
                 self.edit_widgets = self.new_version.get_column_input_widget_instances(
                     self.edit_session, self.table.session, self.table.win_id)
                 
@@ -124,15 +121,16 @@ class Table(ReadonlyTable):
                     
             def save(self):
                 self.edit_session.commit()
+                self.object.ww_model.expire()
                 self.table.ww_filter.reread()
-                self.revert()
+                self.object.ww_filter.revert()
                 self.new_version.ww_is_new = False
 
             def delete(self):
                 if self.is_new():
                     self.revert()
                 else:
-                    self.object.is_current = False
+                    self.table.db_session.delete(self.object)
                     self.table.db_session.commit()
                     self.table.ww_filter.reread()
 
@@ -212,7 +210,6 @@ class ExpansionEditableTable(ExpandableTable):
                     self.edit_expansion()
 
             def edit_expansion(self):
-                self.ww_expansion['ww_expanded_old_version'] = self.ww_expansion['ww_expanded']
                 self.ww_expansion['ww_expanded'] = self.table.ExpansionEditor(
                     self.table.session, self.table.win_id,
                     edit_session = self.edit_session,
