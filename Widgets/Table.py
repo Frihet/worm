@@ -66,16 +66,12 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                         #### fixme ####
                         # name = """SQLAlchemy: merge clashes with
                         # many-to-many"""
-                        # description = """Uggly hack since merge does not
-                        # seem to work when you have many-to-many
-                        # relationships!!! This uggly hack works since the
+                        # description = """This uggly hack works since the
                         # object is never changed in the main session, so
                         # loading it straight from the DB will give the
                         # right attribute values."""
                         #### end ####
-                        #self.new_version = self.edit_session.merge(self.object.ww_model)
-                        t = type(self.object.ww_model)
-                        self.new_version = self.edit_session.query(t).filter(t.id == self.object.ww_model.id)[0]
+                        self.new_version = self.edit_session.load_from_session(self.object.ww_model)
                     self.edit_widgets = self.new_version.get_column_input_widget_instances(
                         self.edit_session, self.table.session, self.table.win_id)
 

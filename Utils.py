@@ -62,6 +62,18 @@ def create_engine(url):
                 self.save(obj)
                 self.flush()
                 return self.expire(obj)
+
+            def load_from_session(self, obj):
+                #### fixme ####
+                # name = """SQLAlchemy: merge clashes with
+                # many-to-many"""
+                # description = """Uggly hack since merge does not
+                # seem to work when you have many-to-many
+                # relationships!!! So when no fields are changed, at
+                # least you can do this instead..."""
+                #### end ####
+                t = type(obj)
+                return self.query(t).filter(t.id == obj.id)[0]
             
         return Session
     engine.sessions = sessions
