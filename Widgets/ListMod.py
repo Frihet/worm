@@ -37,4 +37,5 @@ class RowsListInput(Webwidgets.RowsListInput, Worm.Widgets.RowsMod.RowsComposite
         WwFilters = Webwidgets.RowsListInput.RowsFilters.WwFilters + ["StaticRowsFilter"]
 
 class RowsSingleValueListInput(RowsListInput, Webwidgets.RowsSingleValueListInput):
-    pass
+    class WwModel(Webwidgets.RowsSingleValueListInput.WwModel, RowsListInput.WwModel):
+        pass
