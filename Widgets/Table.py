@@ -38,6 +38,9 @@ class ReadonlyTable(Webwidgets.Table, Worm.Widgets.RowsMod.RowsComposite, Worm.W
 
 
 class Table(ReadonlyTable, Webwidgets.EditableTable):
+    class WwModel(ReadonlyTable.WwModel, Webwidgets.EditableTable.WwModel):
+        pass
+
     class RowsRowModelWrapper(Webwidgets.EditableTable.RowsRowModelWrapper, ReadonlyTable.RowsRowModelWrapper):
         WwFilters = ["EditingFilters"] + ReadonlyTable.RowsRowModelWrapper.WwFilters
         
@@ -97,8 +100,14 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                         self.table.ww_filter.reread()
 
                 def __getattr__(self, name):
-                    if name in self.edit_widgets:
-                        return self.edit_widgets[name]
+                    if name not in ('table', 'ww_is_new'):
+                        cols = self.table.ww_filter.edit_columns
+                        if self.is_new():
+                            cols = self.table.ww_filter.edit_new_columns
+
+                        if name in self.edit_widgets and cols.get(name, cols['ww_default']):
+                            return self.edit_widgets[name]
+
                     return getattr(self.ww_filter, name)
 
     class RowsFilters(ReadonlyTable.RowsFilters, Webwidgets.EditableTable.RowsFilters):
