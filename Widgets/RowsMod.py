@@ -26,6 +26,7 @@ import Worm.Utils, Worm.Model.Base, Worm.Widgets.Base, math, sqlalchemy.sql, ite
 class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
     debug_queries = False
     debug_expand_info = False
+    debug_rows = False
 
     class WwModel(Webwidgets.RowsComposite.WwModel):
         db_where = None
@@ -43,8 +44,10 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             def __getattr__(self, name):
                 if name == "ww_row_id":
                     return self.id
+#                import traceback
+#                traceback.print_stack()
+                
                 raise AttributeError(self, name)
-
             def get_column_from_alias(cls, alias, col):
                 return getattr(alias.c, ("%s_%s_%s" % (cls.__module__.replace('.', '_'), cls.__name__, col)).lower())
             get_column_from_alias = classmethod(get_column_from_alias)
@@ -63,7 +66,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
         class SQLAlchemyFilter(Webwidgets.Filter):
             non_memory_storage = True
 
-            def get_row_query(self, all, output_options):
+            def get_row_query(self, all = False, output_options = {}, **kw):
                 expand_tree = self.get_expand_tree()
                 query = self.db_session.query(self.DBModel)
                 if self.db_where is not None:
@@ -160,8 +163,14 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
 
                 return query
 
-            def get_rows(self, all, output_options):
-                return list(self.get_row_query(all, output_options))
+            def get_rows(self, **kw):
+                result = list(self.get_row_query(**kw))
+                if self.debug_rows:
+                    print "ROWS", repr(self), "==>"
+                    for row in result:
+                        print "    ", repr(row)
+                        print "   ==>", 
+                return result
 
             def get_row_by_id(self, row_id):
                 return self.db_session.query(self.DBModel).filter(self.DBModel.id == int(row_id))[0]
@@ -170,14 +179,14 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 return str(row.id)
 
             def get_pages(self):
-                return int(math.ceil(float(self.get_row_query(True, {}).count()) / self.rows_per_page))
+                return int(math.ceil(float(self.get_row_query(all = True).count()) / self.rows_per_page))
 
     class RowsFilters(Webwidgets.RowsComposite.RowsFilters):
         WwFilters = Webwidgets.RowsComposite.RowsFilters.WwFilters + ["StaticRowsFilter"]
 
         class StaticRowsFilter(Webwidgets.Filter):
-            def get_rows(self, all, output_options):
-                return self.pre_rows + self.ww_filter.get_rows(all, output_options) + self.post_rows
+            def get_rows(self, **kw):
+                return self.pre_rows + self.ww_filter.get_rows(**kw) + self.post_rows
 
             def get_row_by_id(self, row_id):
                 if row_id.startswith("pre_"):

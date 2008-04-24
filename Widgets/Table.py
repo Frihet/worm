@@ -36,6 +36,25 @@ class ReadonlyTable(Webwidgets.Table, Worm.Widgets.RowsMod.RowsComposite, Worm.W
     class RowsFilters(Worm.Widgets.RowsMod.RowsComposite.RowsFilters, Webwidgets.Table.RowsFilters):
         WwFilters = Webwidgets.Table.RowsFilters.WwFilters + ["StaticRowsFilter"]
 
+class ExpandableReadonlyTable(ReadonlyTable, Webwidgets.ExpandableTable):
+    class RowsFilters(ReadonlyTable.RowsFilters, Webwidgets.ExpandableTable.RowsFilters):
+        WwFilters = ["TableExpandableFilter"] + ReadonlyTable.RowsFilters.WwFilters
+
+class ExpansionReadonlyTable(ExpandableReadonlyTable):
+    class RowsRowModelWrapper(ExpandableReadonlyTable.RowsRowModelWrapper):
+        WwFilters = ["ExpansionFilter"] + ExpandableReadonlyTable.RowsRowModelWrapper.WwFilters
+
+        class ExpansionFilter(Webwidgets.Filter):
+            def __init__(self, *arg, **kw):
+                Webwidgets.Filter.__init__(self, *arg, **kw)
+                if hasattr(self, 'is_expansion'): return
+                self.ww_expansion = {
+                    'is_expansion': True,
+                    'ww_functions': [],
+                    'ww_expanded': self.table.ExpansionViewer(
+                    self.table.session, self.table.win_id,
+                    parent_table = self)}
+
 
 class Table(ReadonlyTable, Webwidgets.EditableTable):
     class WwModel(ReadonlyTable.WwModel, Webwidgets.EditableTable.WwModel):
@@ -117,12 +136,12 @@ class ExpandableTable(Table, Webwidgets.ExpandableTable):
     class RowsFilters(Table.RowsFilters, Webwidgets.ExpandableTable.RowsFilters):
         WwFilters = ["TableExpandableFilter"] + Table.RowsFilters.WwFilters
 
-class ExpansionEditableTable(ExpandableTable):
+class ExpansionTable(ExpandableTable):
     class RowsRowModelWrapper(ExpandableTable.RowsRowModelWrapper):
         class EditingFilters(ExpandableTable.RowsRowModelWrapper.EditingFilters):
-            WwFilters = ["ExpansionEditingFilter"] + ExpandableTable.RowsRowModelWrapper.EditingFilters.WwFilters
+            WwFilters = ["ExpansionFilter"] + ExpandableTable.RowsRowModelWrapper.EditingFilters.WwFilters
 
-            class ExpansionEditingFilter(Webwidgets.Filter):
+            class ExpansionFilter(Webwidgets.Filter):
                 def __init__(self, *arg, **kw):
                     Webwidgets.Filter.__init__(self, *arg, **kw)
                     if hasattr(self, 'is_expansion'): return
@@ -132,6 +151,14 @@ class ExpansionEditableTable(ExpandableTable):
                         'ww_expanded': self.table.ExpansionViewer(
                         self.table.session, self.table.win_id,
                         parent_table = self)}
+
+class ExpansionEditableTable(ExpansionTable):
+    class RowsRowModelWrapper(ExpansionTable.RowsRowModelWrapper):
+        class EditingFilters(ExpansionTable.RowsRowModelWrapper.EditingFilters):
+            class ExpansionFilter(ExpansionTable.RowsRowModelWrapper.EditingFilters.ExpansionFilter):
+                def __init__(self, *arg, **kw):
+                    ExpansionTable.RowsRowModelWrapper.EditingFilters.ExpansionFilter.__init__(self, *arg, **kw)
+                    if hasattr(self, 'is_expansion'): return
                     self.ww_expansion['ww_expanded_old_version'] = self.ww_expansion['ww_expanded']
                     if self.is_new():
                         self.edit_expansion()
