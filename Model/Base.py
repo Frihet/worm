@@ -15,8 +15,14 @@ class BaseModel(object):
         return str(unicode(self))    
 
     def __repr__(self):
+        def strattr(name):
+            value = getattr(self, name)
+            if self.column_is_scalar(name):
+                return unicode(value)
+            else:
+                return ', '.join(unicode(part) for part in value)
         return "<%s.%s%s>" % (type(self).__module__, type(self).__name__,
-                              ','.join(["\n %s=%s" % (name, unicode(getattr(self, name)))
+                              ','.join(["\n %s=%s" % (name, strattr(name))
                                         for name in self.get_column_names()]))
         
     def get_columns(cls, exclude_primary_keys = False, exclude_foreign_keys = False):
