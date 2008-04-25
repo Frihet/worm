@@ -9,7 +9,9 @@ class BaseModel(object):
     def __unicode__(self):
         if hasattr(self, 'title'):
             return unicode(self.title)
-        return repr(self)
+        if hasattr(self, 'id'):
+            return "%s.%s %s" % (type(self).__module__, type(self).__name__, self.id)
+        return "%s.%s" % (type(self).__module__, type(self).__name__)
 
     def __str__(self):
         return str(unicode(self))    

@@ -44,9 +44,6 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             def __getattr__(self, name):
                 if name == "ww_row_id":
                     return self.id
-#                import traceback
-#                traceback.print_stack()
-                
                 raise AttributeError(self, name)
             def get_column_from_alias(cls, alias, col):
                 return getattr(alias.c, ("%s_%s_%s" % (cls.__module__.replace('.', '_'), cls.__name__, col)).lower())
