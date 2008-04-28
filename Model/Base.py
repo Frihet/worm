@@ -104,7 +104,8 @@ class BaseModel(object):
                 class ForeignInput(Worm.Widgets.ListMod.RowsSingleValueListInput):
                     class WwModel(Worm.Widgets.ListMod.RowsSingleValueListInput.WwModel):
                         DBModel = foreign
-                        db_where = foreign.is_current == True
+                        if hasattr(foreign, 'is_current'):
+                            db_where = foreign.is_current == True
                 return ForeignInput
             else:
                 return None

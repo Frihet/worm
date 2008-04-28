@@ -53,7 +53,7 @@ class ExpansionReadonlyTable(ExpandableReadonlyTable):
                     'ww_functions': [],
                     'ww_expanded': self.table.ExpansionViewer(
                     self.table.session, self.table.win_id,
-                    parent_table = self)}
+                    parent_row = self.object)}
 
 
 class Table(ReadonlyTable, Webwidgets.EditableTable):
@@ -150,7 +150,7 @@ class ExpansionTable(ExpandableTable):
                         'ww_functions': [],
                         'ww_expanded': self.table.ExpansionViewer(
                         self.table.session, self.table.win_id,
-                        parent_table = self)}
+                        parent_row = self.object)}
 
 class ExpansionEditableTable(ExpansionTable):
     class RowsRowModelWrapper(ExpansionTable.RowsRowModelWrapper):
@@ -167,7 +167,7 @@ class ExpansionEditableTable(ExpansionTable):
                     self.ww_expansion['ww_expanded'] = self.table.ExpansionEditor(
                         self.table.session, self.table.win_id,
                         edit_session = self.edit_session,
-                        parent_table = self.new_version)
+                        parent_row = self.object)
 
                 def edit(self):
                     self.ww_filter.edit()
