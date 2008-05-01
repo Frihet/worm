@@ -21,7 +21,7 @@
 # USA
 
 import Webwidgets
-import Worm.Utils, Worm.Model.Base, Worm.Widgets.Base, math, sqlalchemy.sql, itertools, types
+import Argentum, Worm.Model.Base, Worm.Widgets.Base, math, sqlalchemy.sql, itertools, types
 
 class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
     debug_queries = False
@@ -87,14 +87,14 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                                 whens.append((getattr(self.DBModel, node.col) == value,
                                              tree_to_filter(sub)))
                             if whens:
-                                return sqlalchemy.sql.case(whens, else_ = Worm.Utils.True_)
+                                return sqlalchemy.sql.case(whens, else_ = Argentum.True_)
                             else:
-                                return Worm.Utils.True_
+                                return Argentum.True_
                 else:
                     # OK, this is a bit uggly, but there is no other way in SQL :(
                     # This computes the previous line (per the sorting order) of each line
                     prev_row_id = query.compile().alias()
-                    row_cmp = Worm.Utils.False_
+                    row_cmp = Argentum.False_
                     for col, order in reversed(sort):
                         prev_col = self.DBModel.get_column_from_alias(prev_row_id, col)
                         cur_col = getattr(self.DBModel, col)
@@ -128,18 +128,18 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                     def tree_to_filter(node):
                         whens = []
                         for value, sub in node.values.iteritems():
-                            sub_query = Worm.Utils.False_
+                            sub_query = Argentum.False_
                             if sub.toggled:
                                 sub_query = tree_to_filter(sub)
                             whens.append((getattr(self.DBModel, node.col) == value,
                                          sub_query))
                         if whens:
-                            node_query = sqlalchemy.sql.case(whens, else_ = Worm.Utils.False_)
+                            node_query = sqlalchemy.sql.case(whens, else_ = Argentum.False_)
                         else:
-                            node_query = Worm.Utils.False_
+                            node_query = Argentum.False_
                         return sqlalchemy.sql.case([(   self.DBModel.get_column_from_alias(prev_row, node.col)
                                                      == getattr(self.DBModel, node.col), node_query)],
-                                                   else_ = Worm.Utils.True_)
+                                                   else_ = Argentum.True_)
 
                 query = query.filter(tree_to_filter(expand_tree))
 

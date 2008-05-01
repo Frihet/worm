@@ -21,7 +21,7 @@
 # USA
 
 import Webwidgets
-import Worm.Utils, Worm.Model.Base, Worm.Widgets.Base, Worm.Widgets.RowsMod, math, sqlalchemy.sql, itertools, types
+import Argentum, Worm.Model.Base, Worm.Widgets.Base, Worm.Widgets.RowsMod, math, sqlalchemy.sql, itertools, types
 
 class RowsListInput(Webwidgets.RowsListInput, Worm.Widgets.RowsMod.RowsComposite, Worm.Widgets.Base.Widget):
     debug_queries = False

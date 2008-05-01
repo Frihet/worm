@@ -1,9 +1,9 @@
 import elixir, itertools
-import Worm, Worm.Utils, Worm.Demo.Table.Config
+import Worm, Argentum, Worm.Demo.Table.Config
 
 __session__ = None
 
-engine = Worm.Utils.create_engine(Worm.Demo.Table.Config.database_url)
+engine = Argentum.create_engine(Worm.Demo.Table.Config.database_url)
 
 class Service(Worm.Table.WwModel.DBModel, elixir.entity.Entity):
     country = elixir.Field(elixir.Unicode)
