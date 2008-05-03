@@ -1,5 +1,6 @@
 import Webwidgets
 
+# FXIME: Shouldn't this use Webwidgets.RenameWrapper?
 class DBFieldEditor(Webwidgets.ValueInput):
     WwFilters = ['RenameFilter']
     
