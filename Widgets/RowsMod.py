@@ -1,6 +1,6 @@
 #! /bin/env python
-# -*- coding: UTF-8 -*-
-# vim: set fileencoding=UTF-8 :
+# -*- coding: utf-8 -*-
+# vim: set fileencoding=utf-8 :
 
 # Lumbricidae Worm widget object relational mapper
 # Copyright (C) 2008 FreeCode AS, Egil Moeller <egil.moeller@freecode.no>
@@ -33,7 +33,10 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
         """This is a filter to be applied to all database queries,
         prior to any sorting, expansion etc. It can be any SQLAlchemy
         SQL Expression expression."""
-        
+        db_mangle = None
+        """This method is called with the current query and should
+        return an mangled version of the query."""
+
         class DBModel(Worm.Model.Base.BaseModel):
             """This is the database model used by the model. This
             class must be subclassed and mapped using SQLAlchemy. It
@@ -68,6 +71,8 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 query = self.db_session.query(self.DBModel)
                 if self.db_where is not None:
                     query = query.filter(self.db_where)
+                if self.db_mangle is not None:
+                    query = self.db_mangle(query)
 
                 # We need a complete ordering, so that the sorting is
                 # deterministic and stable over reloads...
