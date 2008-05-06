@@ -1,4 +1,4 @@
-import Webwidgets
+import Webwidgets, sqlalchemy, sys
 
 class Widget(Webwidgets.Widget):
     _db_session = None
@@ -27,3 +27,8 @@ class Widget(Webwidgets.Widget):
 
     def db_session_rollback_and_globalize(self):
         del self.db_session
+
+    def append_exception(self):
+        if isinstance(sys.exc_info()[1], sqlalchemy.exceptions.SQLAlchemyError):
+            self.db_session.rollback()
+        Webwidgets.Widget.append_exception(self)
