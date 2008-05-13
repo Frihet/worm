@@ -24,8 +24,10 @@
 # the wrong name first, when loading an index.py-file from the Demo
 # directory. Doing so makes us have copies of some classes, which
 # fucks up isinstance()-calls.
+
 if __name__ == "Worm":
     from Program import *
+    from Widgets.Base import *
     from Widgets.RowsMod import *
     from Widgets.ListMod import *
     from Widgets.Table import *
