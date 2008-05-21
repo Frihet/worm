@@ -85,7 +85,9 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                     # algoritm used in Webwidgets.Table.
                     def tree_to_filter(node):
                         if node.toggled:
-                            return self.DBModel.id.in_(node.rows.keys())
+                            return self.DBModel.id.in_([
+                                self.object.ww_filter.get_row_id_to_model_row_id(key)
+                                for key in node.rows.keys()])
                         else:
                             whens = []
                             for value, sub in node.values.iteritems():
@@ -145,7 +147,6 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                         return sqlalchemy.sql.case([(   self.DBModel.get_column_from_alias(prev_row, node.col)
                                                      == getattr(self.DBModel, node.col), node_query)],
                                                    else_ = Argentum.True_)
-
                 query = query.filter(tree_to_filter(expand_tree))
 
                 for col, order in sort:
