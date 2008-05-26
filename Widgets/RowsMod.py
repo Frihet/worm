@@ -96,7 +96,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                             if whens:
                                 return sqlalchemy.sql.case(whens, else_ = Argentum.True_)
                             else:
-                                return Argentum.True_
+                                return Argentum.TrueWhere
                 else:
                     # OK, this is a bit uggly, but there is no other way in SQL :(
                     # This computes the previous line (per the sorting order) of each line
@@ -143,7 +143,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                         if whens:
                             node_query = sqlalchemy.sql.case(whens, else_ = Argentum.False_)
                         else:
-                            node_query = Argentum.False_
+                            node_query = Argentum.FalseWhere
                         return sqlalchemy.sql.case([(   self.DBModel.get_column_from_alias(prev_row, node.col)
                                                      == getattr(self.DBModel, node.col), node_query)],
                                                    else_ = Argentum.True_)
