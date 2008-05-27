@@ -49,7 +49,11 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                     return self.id
                 raise AttributeError(self, name)
             def get_column_from_alias(cls, alias, col):
-                return getattr(alias.c, ("%s_%s_%s" % (cls.__module__.replace('.', '_'), cls.__name__, col)).lower())
+                new_col = "%s_%s" % (cls.table.name, col)
+                if hasattr(alias.c, new_col):
+                    return getattr(alias.c, new_col)
+                else:
+                    return getattr(alias.c, col)
             get_column_from_alias = classmethod(get_column_from_alias)
 
         pre_rows = []
