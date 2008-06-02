@@ -27,13 +27,13 @@ class RowsListInput(Webwidgets.RowsListInput, Worm.Widgets.RowsMod.RowsComposite
     debug_queries = False
     debug_expand_info = False
 
-    class WwModel(Webwidgets.RowsListInput.WwModel, Worm.Widgets.RowsMod.RowsComposite.WwModel):
+    class WwModel(Worm.Widgets.RowsMod.RowsComposite.WwModel, Webwidgets.RowsListInput.WwModel):
         pass
     
-    class SourceFilters(Worm.Widgets.RowsMod.RowsComposite.SourceFilters, Webwidgets.Table.SourceFilters):
+    class SourceFilters(Worm.Widgets.RowsMod.RowsComposite.SourceFilters, Webwidgets.RowsListInput.SourceFilters):
         WwFilters = Webwidgets.RowsListInput.SourceFilters.WwFilters + ['SQLAlchemyFilter']
 
-    class RowsFilters(Worm.Widgets.RowsMod.RowsComposite.RowsFilters, Webwidgets.Table.RowsFilters):
+    class RowsFilters(Worm.Widgets.RowsMod.RowsComposite.RowsFilters, Webwidgets.RowsListInput.RowsFilters):
         WwFilters = Webwidgets.RowsListInput.RowsFilters.WwFilters + ["StaticRowsFilter"]
 
 class RowsSingleValueListInput(RowsListInput, Webwidgets.RowsSingleValueListInput):
