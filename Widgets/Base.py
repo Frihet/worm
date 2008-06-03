@@ -1,23 +1,36 @@
 import Webwidgets, sqlalchemy, sys
 
 class Widget(Webwidgets.Widget):
-    _db_session = None
     class DbSession(object):
         def __get__(self, instance, owner):
-            if instance._db_session is not None:
-                return instance._db_session
-            return instance.session.db
+            try:
+                if instance is None:
+                    return None
+                elif 'db_session' in instance.__dict__:
+                    return instance.__dict__['db_session']
+                elif hasattr(instance.ww_model, 'db_session'):
+                    return instance.ww_model.db_session
+                elif instance.parent is not None:
+                    try:
+                        return instance.parent.get_ansestor_by_attribute(name="db_session").db_session
+                    except KeyError:
+                        pass
+                return instance.session.db
+            except:
+                import pdb
+                sys.last_traceback = sys.exc_info()[2]
+                pdb.pm()
 
         def __set__(self, instance, value):
-            instance._db_session = value
+            instance.__dict__['db_session'] = value
 
         def __delete__(self, instance):
-            if instance._db_session is not None:
-                instance._db_session.close()
-            instance._db_session = None
+            if instance.__dict__['db_session']:
+                instance.__dict__['db_session'].close()
+            del instance.__dict__['db_session']
             
     db_session = DbSession()
-    
+
     def db_session_localize(self):
         self.db_session = self.db_session.bind.Session()
 
