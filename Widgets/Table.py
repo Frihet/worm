@@ -130,7 +130,12 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                     return getattr(self.ww_filter, name)
 
     class RowsFilters(ReadonlyTable.RowsFilters, Webwidgets.EditableTable.RowsFilters):
-        WwFilters = ["TableEditableFilter"] + ReadonlyTable.RowsFilters.WwFilters
+        WwFilters = ["TableEditableFilter", "SQLAlchemyEditingFilter"] + ReadonlyTable.RowsFilters.WwFilters
+
+        class SQLAlchemyEditingFilter(Webwidgets.Filter):
+            def create_new_row(self):
+                return self.DBModel(ww_is_new = True)
+
 
 class ExpandableTable(Table, Webwidgets.ExpandableTable):
     class RowsFilters(Table.RowsFilters, Webwidgets.ExpandableTable.RowsFilters):
