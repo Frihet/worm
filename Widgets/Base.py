@@ -39,6 +39,7 @@ class Widget(Webwidgets.Widget):
         del self.db_session
 
     def db_session_rollback_and_globalize(self):
+        self.db_session.rollback()
         del self.db_session
 
     def append_exception(self):

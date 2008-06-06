@@ -60,6 +60,8 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
     class WwModel(ReadonlyTable.WwModel, Webwidgets.EditableTable.WwModel):
         pass
 
+    class RowsRowWidget(Webwidgets.EditableTable.RowsRowWidget, Worm.Widgets.Base.Widget): pass
+
     class RowsRowModelWrapper(Webwidgets.EditableTable.RowsRowModelWrapper, ReadonlyTable.RowsRowModelWrapper):
         WwFilters = ["EditingFilters"] + ReadonlyTable.RowsRowModelWrapper.WwFilters
         
@@ -70,6 +72,7 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                 def __init__(self, *arg, **kw):
                     Webwidgets.Filter.__init__(self, *arg, **kw)
                     object.__setattr__(self, 'edit_widgets', {})
+                    self.row_widget = self.table.child_for_row(self.object)
                     if self.is_new():
                         self.edit()
 
@@ -81,9 +84,9 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
 
                 def edit(self):
                     if self.edit_widgets: return
-                    self.edit_session = self.table.db_session.bind.Session()
+                    self.row_widget.db_session_localize()
                     if self.is_new():
-                        self.new_version = self.edit_session.save_and_expire(self.object.ww_model)
+                        self.new_version = self.row_widget.db_session.save_and_expire(self.object.ww_model)
                     else:
                         #### fixme ####
                         # name = """SQLAlchemy: merge clashes with
@@ -93,29 +96,32 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                         # loading it straight from the DB will give the
                         # right attribute values."""
                         #### end ####
-                        self.new_version = self.edit_session.load_from_session(self.object.ww_model)
+                        self.new_version = self.row_widget.db_session.load_from_session(self.object.ww_model)
                     self.edit_widgets = self.new_version.get_column_input_widget_instances(
-                        self.edit_session, self.table.session, self.table.win_id)
+                        self.row_widget.db_session, self.table.session, self.table.win_id)
 
-                def revert(self):
-                    self.edit_session.close()
+                def done(self):
                     self.edit_widgets = {}
                     if self.is_new():
                         self.table.pre_rows.remove(self.object.ww_model)
+                    self.table.ww_filter.reread()
+
+                def revert(self):
+                    self.row_widget.db_session_rollback_and_globalize()
+                    self.object.ww_filter.done()
 
                 def save(self):
-                    self.edit_session.commit()
-                    self.object.ww_model.expire()
-                    self.table.ww_filter.reread()
-                    self.object.ww_filter.revert()
+                    self.row_widget.db_session_commit_and_globalize()
+                    self.row_widget.db_session.expire()
+                    self.object.ww_filter.done()
                     self.new_version.ww_is_new = False
 
                 def delete(self):
                     if self.is_new():
                         self.revert()
                     else:
-                        self.table.db_session.delete(self.object)
-                        self.table.db_session.commit()
+                        self.row_widget.table.db_session.delete(self.object)
+                        self.row_widget.table.db_session.commit()
                         self.table.ww_filter.reread()
 
                 def __getattr__(self, name):
@@ -171,7 +177,7 @@ class ExpansionEditableTable(ExpansionTable):
                 def edit_expansion(self):
                     self.ww_expansion['ww_expanded'] = self.table.ExpansionEditor(
                         self.table.session, self.table.win_id,
-                        edit_session = self.edit_session,
+                        db_session = self.db_session,
                         parent_row = self.object)
 
                 def edit(self):
