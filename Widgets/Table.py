@@ -184,6 +184,6 @@ class ExpansionEditableTable(ExpansionTable):
                     self.ww_filter.edit()
                     self.edit_expansion()
 
-                def revert(self):
-                    self.ww_filter.revert()
+                def done(self):
+                    self.ww_filter.done()
                     self.ww_expansion['ww_expanded'] = self.ww_expansion['ww_expanded_old_version'] 
