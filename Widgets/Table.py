@@ -120,8 +120,8 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                     if self.is_new():
                         self.revert()
                     else:
-                        self.row_widget.table.db_session.delete(self.object)
-                        self.row_widget.table.db_session.commit()
+                        self.row_widget.db_session.delete(self.object.ww_model)
+                        self.row_widget.db_session.commit()
                         self.table.ww_filter.reread()
 
                 def __getattr__(self, name):
