@@ -51,7 +51,7 @@ class BaseModel(Argentum.BaseModel):
     get_column_input_widgets = classmethod(get_column_input_widgets)
 
 
-    def get_column_input_widget_instance(self, db_session, session, win_id, name):
+    def get_column_input_widget_instance(self, db_session, session, win_id, name, *extra_classes):
         import Worm.Widgets.ListMod
         model = self
         widget = self.get_column_input_widget(name)
@@ -74,13 +74,15 @@ class BaseModel(Argentum.BaseModel):
                 def __set__(self, instance, value):
                     setattr(model, name, value)
 
-        class ValueMappedWidget(widget):
-            WwFilters = widget.WwFilters + ["ValueMappedWidgetValueMapper"]
-            class ValueMappedWidgetValueMapper(Webwidgets.Filter):
-                value = Value()
-                
-        return ValueMappedWidget(session, win_id)    
+        ValueMappedWidget = type("ValueMapped(%s.%s)" % (widget.__module__, widget.__name__),
+                                 (widget,) + extra_classes,
+                                 {'WwFilters': widget.WwFilters + ["ValueMappedWidgetValueMapper"],
+                                  'ValueMappedWidgetValueMapper': type("ValueMappedWidgetValueMapper",
+                                                                       (Webwidgets.Filter,),
+                                                                       {'value': Value()})})
 
-    def get_column_input_widget_instances(self, db_session, session, win_id):
-        return dict([(name, self.get_column_input_widget_instance(db_session, session, win_id, name))
+        return ValueMappedWidget(session, win_id)
+
+    def get_column_input_widget_instances(self, db_session, session, win_id, *extra_classes):
+        return dict([(name, self.get_column_input_widget_instance(db_session, session, win_id, name, *extra_classes))
                      for name in self.get_column_names()])
