@@ -24,6 +24,9 @@ import Webwidgets
 import Argentum, Worm.Model.Base, Worm.Widgets.Base, math, sqlalchemy.sql, itertools, types
 
 class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
+    """This is a version of L{RowsComposite} that fetches the rows
+    from an SQLAlchemy mapped class."""
+    
     debug_queries = False
     debug_expand_info = False
     debug_rows = False
@@ -68,6 +71,10 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
         WwFilters = Webwidgets.RowsComposite.SourceFilters.WwFilters + ['SQLAlchemyFilter']
 
         class SQLAlchemyFilter(Webwidgets.Filter):
+            """This filter provides rows from an SQLAlchemy back-end,
+            compiling sorting and the row collapse/expand code into
+            SQLExpression."""
+            
             non_memory_storage = True
 
             def get_row_query(self, all = False, output_options = {}, **kw):
@@ -192,6 +199,10 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
         WwFilters = Webwidgets.RowsComposite.RowsFilters.WwFilters + ["StaticRowsFilter"]
 
         class StaticRowsFilter(Webwidgets.Filter):
+            """This filters prepends and appends rows from L{pre_rows}
+            and L{post_rows} respectively to the rows returned by
+            SQLAlchemy."""
+            
             def get_rows(self, **kw):
                 return self.pre_rows + self.ww_filter.get_rows(**kw) + self.post_rows
 

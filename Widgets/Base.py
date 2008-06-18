@@ -1,6 +1,9 @@
 import Webwidgets, sqlalchemy, sys
 
 class Widget(Webwidgets.Widget):
+    """Base class for all widgets that interact with SQLAlchemy,
+    providing methods for managing SQLAlchemy sessions."""
+    
     class DbSession(object):
         def __get__(self, instance, owner):
             try:
@@ -30,19 +33,43 @@ class Widget(Webwidgets.Widget):
             del instance.__dict__['db_session']
             
     db_session = DbSession()
+    """The current SQLAlchemy session, used along the lines of
+    C{self.db_session.query(Some.DBMappedClass).filter(...)}."""
 
     def db_session_localize(self):
+        """Open a new SQLAlchemy session. This new session is assigned
+        to L{db_session} of this widget and all descendant widgets
+        until either L{db_session_commit_and_globalize} or
+        L{db_session_rollback_and_globalize} is called on this widget.
+
+        Note: You should not call this method more than once without
+        an intervening call to either rollback or commit.
+        """
         self.db_session = self.db_session.bind.Session()
 
     def db_session_commit_and_globalize(self):
+        """Commit the current local SQLAlchemy session (created with
+        L{db_session_localize} on this widget) and remove/close the
+        session, making the global session visible to this widget and
+        descendant widgets again. You might want to do
+        self.db_session.expire() after this to make any changes to
+        your local session visible in the global session (to this and
+        other widgets)."""
         self.db_session.commit()
         del self.db_session
 
     def db_session_rollback_and_globalize(self):
+        """Rollback the current local SQLAlchemy session (created with
+        L{db_session_localize} on this widget) and remove/close the
+        session, making the global session visible to this widget and
+        descendant widgets again."""
         self.db_session.rollback()
         del self.db_session
 
     def append_exception(self):
+        """Rollbacks the current (local) SQLAlchemy session and
+        appends the current exception and backtrace to the list of
+        error messages for this widget.""" 
         if isinstance(sys.exc_info()[1], sqlalchemy.exceptions.SQLAlchemyError):
             self.db_session.rollback()
         Webwidgets.Widget.append_exception(self)

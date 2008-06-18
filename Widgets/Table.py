@@ -37,10 +37,22 @@ class ReadonlyTable(Webwidgets.Table, Worm.Widgets.RowsMod.RowsComposite, Worm.W
         WwFilters = Webwidgets.Table.RowsFilters.WwFilters + ["StaticRowsFilter"]
 
 class ExpandableReadonlyTable(ReadonlyTable, Webwidgets.ExpandableTable):
+    """This widget allows rows to contain a "subtree row" in
+    L{ww_expansion} that is inserted below the row if
+    L{ww_is_expanded} is set on the row. It also adds an expand button
+    that allows the user to set/reset L{ww_is_expanded}.
+    """
+
     class RowsFilters(ReadonlyTable.RowsFilters, Webwidgets.ExpandableTable.RowsFilters):
         WwFilters = ["TableExpandableFilter"] + ReadonlyTable.RowsFilters.WwFilters
 
 class ExpansionReadonlyTable(ExpandableReadonlyTable):
+    """This widget allows any row to be "expanded" by inserting an
+    extra row containing an instance of the L{ExpansionViewer} widget
+    after the row if L{ww_is_expanded} is set on the row. It also adds
+    an expand button that allows the user to set/reset
+    L{ww_is_expanded}."""
+
     class RowsRowModelWrapper(ExpandableReadonlyTable.RowsRowModelWrapper):
         WwFilters = ["ExpansionFilter"] + ExpandableReadonlyTable.RowsRowModelWrapper.WwFilters
 
@@ -57,6 +69,12 @@ class ExpansionReadonlyTable(ExpandableReadonlyTable):
 
 
 class Table(ReadonlyTable, Webwidgets.EditableTable):
+    """A table that provides in-place editing of individual rows using
+    SQLAlchemy sessions. The session is localized for the row (a
+    transaction begun) when the user selects to edit it. It is later
+    either commited or rollbacked and the globalized when the user
+    selects commit or revert."""
+    
     class WwModel(ReadonlyTable.WwModel, Webwidgets.EditableTable.WwModel):
         pass
 
@@ -144,10 +162,22 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
 
 
 class ExpandableTable(Table, Webwidgets.ExpandableTable):
+    """This widget allows rows to contain a "subtree row" in
+    L{ww_expansion} that is inserted below the row if
+    L{ww_is_expanded} is set on the row. It also adds an expand button
+    that allows the user to set/reset L{ww_is_expanded}.
+    """
+
     class RowsFilters(Table.RowsFilters, Webwidgets.ExpandableTable.RowsFilters):
         WwFilters = ["TableExpandableFilter"] + Table.RowsFilters.WwFilters
 
 class ExpansionTable(ExpandableTable):
+    """This widget allows any row to be "expanded" by inserting an
+    extra row containing an instance of the L{ExpansionViewer} widget
+    after the row if L{ww_is_expanded} is set on the row. It also adds
+    an expand button that allows the user to set/reset
+    L{ww_is_expanded}."""
+
     class RowsRowModelWrapper(ExpandableTable.RowsRowModelWrapper):
         class EditingFilters(ExpandableTable.RowsRowModelWrapper.EditingFilters):
             WwFilters = ["ExpansionFilter"] + ExpandableTable.RowsRowModelWrapper.EditingFilters.WwFilters
@@ -164,6 +194,14 @@ class ExpansionTable(ExpandableTable):
                         parent_row = self.object)}
 
 class ExpansionEditableTable(ExpansionTable):
+    """A table that provides in-place editing of individual rows with
+    expansion "subtree widgets" (see L{ExpansionTable} for more details)."""
+
+    class ExpansionEditor(Webwidgets.Widget):
+        """Override this member variable with any widget to display
+        beneath the rows of the table as expansion when the row is
+        being edited."""
+
     class RowsRowModelWrapper(ExpansionTable.RowsRowModelWrapper):
         class EditingFilters(ExpansionTable.RowsRowModelWrapper.EditingFilters):
             class ExpansionFilter(ExpansionTable.RowsRowModelWrapper.EditingFilters.ExpansionFilter):
