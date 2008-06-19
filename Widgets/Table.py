@@ -23,7 +23,7 @@
 import Webwidgets
 import Argentum, Worm.Model.Base, Worm.Widgets.Base, Worm.Widgets.RowsMod, math, sqlalchemy.sql, itertools, types
 
-class ReadonlyTable(Webwidgets.Table, Worm.Widgets.RowsMod.RowsComposite, Worm.Widgets.Base.Widget):
+class ReadonlyTable(Webwidgets.Table, Worm.Widgets.RowsMod.RowsComposite):
     debug_queries = False
     debug_expand_info = False
 
