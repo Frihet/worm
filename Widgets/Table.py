@@ -171,27 +171,15 @@ class ExpandableTable(Table, Webwidgets.ExpandableTable):
     class RowsFilters(Table.RowsFilters, Webwidgets.ExpandableTable.RowsFilters):
         WwFilters = ["TableExpandableFilter"] + Table.RowsFilters.WwFilters
 
-class ExpansionTable(ExpandableTable):
+class ExpansionTable(ExpandableTable, Webwidgets.ExpansionTable):
     """This widget allows any row to be "expanded" by inserting an
     extra row containing an instance of the L{ExpansionViewer} widget
     after the row if L{ww_is_expanded} is set on the row. It also adds
     an expand button that allows the user to set/reset
     L{ww_is_expanded}."""
 
-    class RowsRowModelWrapper(ExpandableTable.RowsRowModelWrapper):
-        class EditingFilters(ExpandableTable.RowsRowModelWrapper.EditingFilters):
-            WwFilters = ["ExpansionFilter"] + ExpandableTable.RowsRowModelWrapper.EditingFilters.WwFilters
-
-            class ExpansionFilter(Webwidgets.Filter):
-                def __init__(self, *arg, **kw):
-                    Webwidgets.Filter.__init__(self, *arg, **kw)
-                    if hasattr(self, 'is_expansion'): return
-                    self.ww_expansion = {
-                        'is_expansion': True,
-                        'ww_functions': [],
-                        'ww_expanded': self.table.ExpansionViewer(
-                        self.table.session, self.table.win_id,
-                        parent_row = self.object)}
+    class RowsRowModelWrapper(ExpandableTable.RowsRowModelWrapper, Webwidgets.ExpansionTable.RowsRowModelWrapper):
+        WwFilters = ["ExpansionFilter"] + ExpandableTable.RowsRowModelWrapper.WwFilters
 
 class ExpansionEditableTable(ExpansionTable):
     """A table that provides in-place editing of individual rows with
@@ -203,25 +191,24 @@ class ExpansionEditableTable(ExpansionTable):
         being edited."""
 
     class RowsRowModelWrapper(ExpansionTable.RowsRowModelWrapper):
-        class EditingFilters(ExpansionTable.RowsRowModelWrapper.EditingFilters):
-            class ExpansionFilter(ExpansionTable.RowsRowModelWrapper.EditingFilters.ExpansionFilter):
-                def __init__(self, *arg, **kw):
-                    ExpansionTable.RowsRowModelWrapper.EditingFilters.ExpansionFilter.__init__(self, *arg, **kw)
-                    if hasattr(self, 'is_expansion'): return
-                    self.ww_expansion['ww_expanded_old_version'] = self.ww_expansion['ww_expanded']
-                    if self.is_new():
-                        self.edit_expansion()
-
-                def edit_expansion(self):
-                    self.ww_expansion['ww_expanded'] = self.table.ExpansionEditor(
-                        self.table.session, self.table.win_id,
-                        db_session = self.row_widget.db_session,
-                        parent_row = self.object)
-
-                def edit(self):
-                    self.ww_filter.edit()
+        class ExpansionFilter(ExpansionTable.RowsRowModelWrapper.ExpansionFilter):
+            def __init__(self, *arg, **kw):
+                ExpansionTable.RowsRowModelWrapper.ExpansionFilter.__init__(self, *arg, **kw)
+                if hasattr(self, 'is_expansion'): return
+                self.ww_expansion['ww_expanded_old_version'] = self.ww_expansion['ww_expanded']
+                if self.is_new():
                     self.edit_expansion()
 
-                def done(self):
-                    self.ww_filter.done()
-                    self.ww_expansion['ww_expanded'] = self.ww_expansion['ww_expanded_old_version'] 
+            def edit_expansion(self):
+                self.ww_expansion['ww_expanded'] = self.table.ExpansionEditor(
+                    self.table.session, self.table.win_id,
+                    db_session = self.row_widget.db_session,
+                    parent_row = self.object)
+
+            def edit(self):
+                self.ww_filter.edit()
+                self.edit_expansion()
+
+            def done(self):
+                self.ww_filter.done()
+                self.ww_expansion['ww_expanded'] = self.ww_expansion['ww_expanded_old_version'] 

@@ -161,7 +161,13 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 query = query.filter(tree_to_filter(expand_tree))
 
                 for col, order in sort:
-                    query = query.order_by(getattr(getattr(self.DBModel, col).expression_element(), order)())
+                    col = getattr(self.DBModel, col)
+                    # FIXME: Explain why we do this
+                    try:
+                        col = col.expression_element()
+                    except:
+                        pass
+                    query = query.order_by(getattr(col, order)())
                 query = query.order_by(self.DBModel.id.asc())
 
                 if not all and self.rows_per_page != 0:
