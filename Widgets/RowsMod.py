@@ -161,12 +161,13 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 query = query.filter(tree_to_filter(expand_tree))
 
                 for col, order in sort:
-                    col = getattr(self.DBModel, col)
-                    # FIXME: Explain why we do this
-                    try:
-                        col = col.expression_element()
-                    except:
-                        pass
+                    if self.DBModel.column_is_foreign(col):
+                        # FIXME: WHat if we have multiple foreign keys to the same table?
+                        query = query.filter(self.DBModel.get_column_primary_join(col))
+                        col = self.DBModel.get_column_foreign_class(col).table.c.title
+                    else:
+                        # FIXME: Explain why we do this
+                        col = getattr(self.DBModel, col).expression_element()
                     query = query.order_by(getattr(col, order)())
                 query = query.order_by(self.DBModel.id.asc())
 
