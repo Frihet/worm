@@ -46,7 +46,7 @@ class ExpandableReadonlyTable(ReadonlyTable, Webwidgets.ExpandableTable):
     class RowsFilters(ReadonlyTable.RowsFilters, Webwidgets.ExpandableTable.RowsFilters):
         WwFilters = ["TableExpandableFilter"] + ReadonlyTable.RowsFilters.WwFilters
 
-class ExpansionReadonlyTable(ExpandableReadonlyTable):
+class ExpansionReadonlyTable(ExpandableReadonlyTable, Webwidgets.ExpansionTable):
     """This widget allows any row to be "expanded" by inserting an
     extra row containing an instance of the L{ExpansionViewer} widget
     after the row if L{ww_is_expanded} is set on the row. It also adds

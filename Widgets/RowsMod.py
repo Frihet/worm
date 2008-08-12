@@ -193,7 +193,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                         print "   ==>", 
                 return result
 
-            def get_row_by_id(self, row_id):
+            def get_row_by_id(self, row_id, **kwargs):
                 return self.db_session.query(self.DBModel).filter(self.DBModel.id == int(row_id))[0]
 
             def get_row_id(self, row):
@@ -213,13 +213,13 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             def get_rows(self, **kw):
                 return self.pre_rows + self.ww_filter.get_rows(**kw) + self.post_rows
 
-            def get_row_by_id(self, row_id):
+            def get_row_by_id(self, row_id, **kwargs):
                 if row_id.startswith("pre_"):
                     return self.pre_rows[int(row_id[4:])]
                 elif row_id.startswith("post_"):
                     return self.post_rows[int(row_id[5:])]
                 elif row_id.startswith("dyn_"):
-                    return self.ww_filter.get_row_by_id(row_id[4:])
+                    return self.ww_filter.get_row_by_id(row_id[4:], **kwargs)
                 raise Exception("Invalid row-id %s (should have started with 'pre_', 'post_' or 'dyn_')" % row_id)
                 
             def get_row_id(self, row):
