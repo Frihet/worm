@@ -57,6 +57,8 @@ class Widget(Webwidgets.Widget):
         other widgets)."""
         self.db_session.commit()
         del self.db_session
+        # FIXME: Update all nested localized sessions.
+        self.db_session.expire_all()
 
     def db_session_rollback_and_globalize(self):
         """Rollback the current local SQLAlchemy session (created with
