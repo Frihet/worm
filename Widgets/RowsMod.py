@@ -194,7 +194,21 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 return result
 
             def get_row_by_id(self, row_id, **kwargs):
-                return self.db_session.query(self.DBModel).filter(self.DBModel.id == int(row_id))[0]
+                subtype = self.DBModel.get_column_subtype("id")
+                if isinstance(subtype, sqlalchemy.types.Unicode):
+                    row_id = unicode(row_id)
+                elif isinstance(subtype, sqlalchemy.types.String):
+                    row_id = str(row_id)
+                elif isinstance(subtype, sqlalchemy.types.Integer):
+                    row_id = int(row_id)
+                else:
+                    raise NotImplemented
+                # Order by id not to have sqlalchemy order by rowid
+                # automatically under our feet and fuck up views with
+                # joins...
+                return self.db_session.query(self.DBModel
+                                             ).filter(self.DBModel.id == row_id
+                                                      ).order_by(self.DBModel.id)[0]
 
             def get_row_id(self, row):
                 return str(row.id)
