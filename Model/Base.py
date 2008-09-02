@@ -65,7 +65,7 @@ class BaseModel(Argentum.BaseModel):
                     return instance.db_session.merge(value)
                 def __set__(self, instance, value):
                     if value is not None:
-                        value = db_session.merge(value)
+                        value = instance.db_session.merge(value)
                     setattr(model, name, value)
         else:
             class Value(object):

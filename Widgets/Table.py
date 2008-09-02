@@ -1,6 +1,6 @@
 #! /bin/env python
-# -*- coding: UTF-8 -*-
-# vim: set fileencoding=UTF-8 :
+# -*- coding: utf-8 -*-
+# vim: set fileencoding=utf-8 :
 
 # Lumbricidae Worm widget object relational mapper
 # Copyright (C) 2008 FreeCode AS, Egil Moeller <egil.moeller@freecode.no>
@@ -130,16 +130,20 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                 def save(self):
                     self.row_widget.db_session.save_or_update(self.new_version)
                     self.row_widget.db_session_commit_and_globalize()
-                    self.row_widget.db_session.expire()
                     self.object.ww_filter.done()
-                    self.new_version.ww_is_new = False
+                    del self.new_version
 
                 def delete(self):
                     if self.is_new():
                         self.revert()
                     else:
+                        if self.row_widget.db_session_is_localized():
+                            self.row_widget.db_session_rollback_and_globalize()
+
                         self.row_widget.db_session.delete(self.object.ww_model)
                         self.row_widget.db_session.commit()
+                        self.row_widget.db_session.expire_all()
+
                         self.table.ww_filter.reread()
 
                 def __getattr__(self, name):

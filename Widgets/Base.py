@@ -28,6 +28,7 @@ class Widget(Webwidgets.Widget):
             instance.__dict__['db_session'] = value
 
         def __delete__(self, instance):
+            if 'db_session' not in instance.__dict__: return
             if instance.__dict__['db_session']:
                 instance.__dict__['db_session'].close()
             del instance.__dict__['db_session']
@@ -35,6 +36,10 @@ class Widget(Webwidgets.Widget):
     db_session = DbSession()
     """The current SQLAlchemy session, used along the lines of
     C{self.db_session.query(Some.DBMappedClass).filter(...)}."""
+
+    def db_session_is_localized(self):
+        """Return True if session is localized."""
+        return self.__dict__.has_key('db_session')
 
     def db_session_localize(self):
         """Open a new SQLAlchemy session. This new session is assigned
