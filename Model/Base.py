@@ -60,6 +60,7 @@ class BaseModel(Argentum.BaseModel):
         if issubclass(widget, Worm.Widgets.ListMod.RowsSingleValueListInput):
             class Value(object):
                 def __get__(self, instance, owner):
+                    if instance is None: return None
                     value = getattr(model, name)
                     if value is None: return None
                     return instance.db_session.merge(value)
