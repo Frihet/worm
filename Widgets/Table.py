@@ -128,10 +128,11 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                     self.object.ww_filter.done()
 
                 def save(self):
-                    self.row_widget.db_session.save_or_update(self.new_version)
-                    self.row_widget.db_session_commit_and_globalize()
-                    self.object.ww_filter.done()
-                    del self.new_version
+                    if self.row_widget.validate():
+                        self.row_widget.db_session.save_or_update(self.new_version)
+                        self.row_widget.db_session_commit_and_globalize()
+                        self.object.ww_filter.done()
+                        del self.new_version
 
                 def delete(self):
                     if self.is_new():

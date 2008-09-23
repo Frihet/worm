@@ -82,8 +82,20 @@ class BaseModel(Argentum.BaseModel):
                                                                        (Webwidgets.Filter,),
                                                                        {'value': Value()})})
 
-        return ValueMappedWidget(session, win_id)
+        class ValidatingValueMappedWidget(ValueMappedWidget):
+            def validate(self):
+                return getattr(model, "validate_%s" % (name, ), lambda x: True)(self.ww_filter.value)
+
+        # Wrap widget in a composite widget with label
+        class WidgetLabel(Webwidgets.Label):
+            class Label(Webwidgets.Html):
+                html = ''
+
+        widget = ValidatingValueMappedWidget(session, win_id)
+        label = WidgetLabel(session, win_id, target=widget)
+        return Webwidgets.List(session, win_id, children={'Label': label, 'Widget': widget})
 
     def get_column_input_widget_instances(self, db_session, session, win_id, *extra_classes):
         return dict([(name, self.get_column_input_widget_instance(db_session, session, win_id, name, *extra_classes))
                      for name in self.get_column_names()])
+
