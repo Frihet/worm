@@ -137,13 +137,14 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                     if self.is_new():
                         self.revert()
                     else:
-                        if self.row_widget.db_session_is_localized():
+                        if not self.row_widget.db_session_is_localized():
+                            self.row_widget.db_session_localize()
+                        try:
+                            self.row_widget.db_session.delete(self.row_widget.db_session.load_from_session(self.object.ww_model))
+                            self.row_widget.db_session_commit_and_globalize()
+                        except:
                             self.row_widget.db_session_rollback_and_globalize()
-
-                        self.row_widget.db_session.delete(self.object.ww_model)
-                        self.row_widget.db_session.commit()
-                        self.row_widget.db_session.expire_all()
-
+                            raise
                         self.table.ww_filter.reread()
 
                 def __getattr__(self, name):
