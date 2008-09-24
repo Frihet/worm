@@ -73,27 +73,24 @@ class BaseModel(Argentum.BaseModel):
                 def __get__(self, instance, owner):
                     return getattr(model, name)
                 def __set__(self, instance, value):
-                    setattr(model, name, value)
+                    setattr(model, name, value)        
+
+        def validate(self):
+            return getattr(model, "validate_%s" % (name, ), lambda x: True)(self.ww_filter.value)
 
         ValueMappedWidget = type("ValueMapped(%s.%s)" % (widget.__module__, widget.__name__),
                                  (widget,) + extra_classes,
-                                 {'WwFilters': widget.WwFilters + ["ValueMappedWidgetValueMapper"],
+                                 {'invalid_%s' % (name, ): getattr(model, "invalid_%s" % (name, ), name),
+                                  'validate_%s' % (name, ): validate,
+                                  'WwFilters': widget.WwFilters + ["ValueMappedWidgetValueMapper"],
                                   'ValueMappedWidgetValueMapper': type("ValueMappedWidgetValueMapper",
                                                                        (Webwidgets.Filter,),
                                                                        {'value': Value()})})
 
-        class ValidatingValueMappedWidget(ValueMappedWidget):
-            def validate(self):
-                return getattr(model, "validate_%s" % (name, ), lambda x: True)(self.ww_filter.value)
-
         # Wrap widget in a composite widget with label
-        class WidgetLabel(Webwidgets.Label):
-            class Label(Webwidgets.Html):
-                html = ''
-
-        widget = ValidatingValueMappedWidget(session, win_id)
-        label = WidgetLabel(session, win_id, target=widget)
-        return Webwidgets.List(session, win_id, children={'Label': label, 'Widget': widget})
+        return Webwidgets.Field(session, win_id,
+                                children={'Label': Webwidgets.Html(session, win_id, html=''),
+                                          'Field': ValueMappedWidget(session, win_id)})
 
     def get_column_input_widget_instances(self, db_session, session, win_id, *extra_classes):
         return dict([(name, self.get_column_input_widget_instance(db_session, session, win_id, name, *extra_classes))
