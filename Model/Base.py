@@ -4,7 +4,24 @@ import sqlalchemy
 class BaseModel(Argentum.BaseModel):
     """This class extends SQLAlchemy models with some extra utility
     methods, and provides widgets for editing the database fields of
-    the model."""
+    the model.
+
+    Such input widgets provides validators taken from the model. There
+    are two types of validators a model can provide - column specific
+    and generic ones.
+
+    The column-specific ones are specified as
+
+    invalid_COLUMNNAME_something_went_wrong = "Something went terribly wrong..."
+    def validate_COLUMNNAME_something_went_wrong(self):
+        return True or False
+
+    while the generic ones are specified as
+    
+    invalid_all_something_went_wrong = "Something went terribly wrong..."
+    def validate_all_something_went_wrong(self, column_name):
+        return True or False
+    """
 
     def get_column_input_widget(cls, name):
         # We can't import this globally, or we'd have a loop in import dependenmcies :S
@@ -75,17 +92,38 @@ class BaseModel(Argentum.BaseModel):
                 def __set__(self, instance, value):
                     setattr(model, name, value)        
 
-        def validate(self):
-            return getattr(model, "validate_%s" % (name, ), lambda x: True)(self.ww_filter.value)
+        members = {'WwFilters': widget.WwFilters + ["ValueMappedWidgetValueMapper"],
+                   'ValueMappedWidgetValueMapper': type("ValueMappedWidgetValueMapper",
+                                                        (Webwidgets.Filter,),
+                                                        {'value': Value()})}
+        # Set up validators
+        def split_name(member_name):
+            for member_type in ["validate_", "invalid_"]:
+                if member_name.startswith(member_type):
+                    member_name = member_name[len(member_type):]
+                    for member_scope in ["all_", name + "_"]:
+                        if member_name.startswith(member_scope):
+                            return member_type, member_scope, member_name[len(member_scope):]
+            return None
+        for member_name in dir(model):
+            split_member_name = split_name(member_name)
+            if not split_member_name: continue
+            member_type, member_scope, split_member_name = split_member_name
+
+            member_value = getattr(model, member_name)
+            if member_type == "validate_":
+                def make_method(member_scope, member_value, name):
+                    if member_scope == "all_":
+                        return lambda self: member_value(name)
+                    else:
+                        return lambda self: member_value()
+                members['validate_' + split_member_name] = make_method(member_scope, member_value, name)
+            else:
+                members['invalid_' + split_member_name] = member_value
 
         ValueMappedWidget = type("ValueMapped(%s.%s)" % (widget.__module__, widget.__name__),
                                  (widget,) + extra_classes,
-                                 {'invalid_%s' % (name, ): getattr(model, "invalid_%s" % (name, ), name),
-                                  'validate_%s' % (name, ): validate,
-                                  'WwFilters': widget.WwFilters + ["ValueMappedWidgetValueMapper"],
-                                  'ValueMappedWidgetValueMapper': type("ValueMappedWidgetValueMapper",
-                                                                       (Webwidgets.Filter,),
-                                                                       {'value': Value()})})
+                                 members)
 
         # Wrap widget in a composite widget with label
         return Webwidgets.Field(session, win_id,
@@ -96,3 +134,6 @@ class BaseModel(Argentum.BaseModel):
         return dict([(name, self.get_column_input_widget_instance(db_session, session, win_id, name, *extra_classes))
                      for name in self.get_column_names()])
 
+    invalid_all_not_empty = "Field can not be empty"
+    def validate_all_not_empty(self, col):
+        return not getattr(self, "%s__not_empty" % (col,), False) or not not getattr(self, col)
