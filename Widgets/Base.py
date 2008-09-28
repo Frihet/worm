@@ -73,10 +73,10 @@ class Widget(Webwidgets.Widget):
         self.db_session.rollback()
         del self.db_session
 
-    def append_exception(self):
+    def append_exception(self, message=u''):
         """Rollbacks the current (local) SQLAlchemy session and
         appends the current exception and backtrace to the list of
         error messages for this widget.""" 
         if isinstance(sys.exc_info()[1], sqlalchemy.exceptions.SQLAlchemyError):
             self.db_session.rollback()
-        Webwidgets.Widget.append_exception(self)
+        Webwidgets.Widget.append_exception(self, message)
