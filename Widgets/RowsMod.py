@@ -216,6 +216,9 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             def get_pages(self):
                 return int(math.ceil(float(self.get_row_query(all = True).count()) / self.rows_per_page))
 
+            def column_is_sortable(self, column):
+                return self.DBModel.column_is_sortable(column)
+
     class RowsFilters(Webwidgets.RowsComposite.RowsFilters):
         WwFilters = Webwidgets.RowsComposite.RowsFilters.WwFilters + ["StaticRowsFilter"]
 
