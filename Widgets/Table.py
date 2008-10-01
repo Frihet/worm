@@ -115,12 +115,13 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                         #### end ####
                         self.new_version = self.row_widget.db_session.load_from_session(self.new_version)
                     self.edit_widgets = self.new_version.get_column_input_widget_instances(
-                        self.row_widget.db_session, self.table.session, self.table.win_id)
+                        self.row_widget.ww_filter.db_session, self.table.session, self.table.win_id)
 
                 def done(self):
                     self.edit_widgets = {}
                     if self.is_new():
-                        self.table.pre_rows.remove(self.object.ww_model)
+                        self.table.ww_filter.pre_rows.remove(self.new_version)
+                    del self.new_version
                     self.table.ww_filter.reread()
 
                 def revert(self):
@@ -132,7 +133,6 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                         self.row_widget.db_session.save_or_update(self.new_version)
                         self.row_widget.db_session_commit_and_globalize()
                         self.object.ww_filter.done()
-                        del self.new_version
 
                 def delete(self):
                     if self.is_new():

@@ -78,12 +78,15 @@ class BaseModel(Argentum.BaseModel):
             class Value(object):
                 def __get__(self, instance, owner):
                     if instance is None: return None
+
                     value = getattr(model, name)
-                    if value is None: return None
-                    return instance.db_session.merge(value)
+                    if value is not None:
+                        value = db_session.load_from_session(value)
+                    return value
+
                 def __set__(self, instance, value):
                     if value is not None:
-                        value = instance.db_session.merge(value)
+                        value = db_session.load_from_session(value)
                     setattr(model, name, value)
         else:
             class Value(object):
