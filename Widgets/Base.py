@@ -6,31 +6,26 @@ class Widget(Webwidgets.Widget):
     
     class DbSession(object):
         def __get__(self, instance, owner):
-            try:
-                if instance is None:
+            if instance is None:
+                return None
+            elif instance.parent is None:
+                if not hasattr(instance.session, "log_in"):
                     return None
-                elif 'db_session' in instance.__dict__:
-                    return instance.__dict__['db_session']
-                elif hasattr(instance.ww_model, 'db_session'):
-                    return instance.ww_model.db_session
-                elif instance.parent is not None:
-                    try:
-                        return instance.parent.get_ansestor_by_attribute(name="db_session").db_session
-                    except KeyError:
-                        pass
-                return instance.session.db
-            except:
-                import pdb
-                sys.last_traceback = sys.exc_info()[2]
-                pdb.pm()
+                return instance.session.log_in.db_session
+            elif 'db_session' in instance.__dict__:
+                return instance.__dict__['db_session']
+            else:
+                try:
+                    return instance.parent.get_ansestor_by_attribute(name="db_session").db_session
+                except KeyError:
+                    raise AttributeError
 
         def __set__(self, instance, value):
             instance.__dict__['db_session'] = value
 
         def __delete__(self, instance):
             if 'db_session' not in instance.__dict__: return
-            if instance.__dict__['db_session']:
-                instance.__dict__['db_session'].close()
+            instance.__dict__['db_session'].close()
             del instance.__dict__['db_session']
             
     db_session = DbSession()
@@ -47,11 +42,16 @@ class Widget(Webwidgets.Widget):
         until either L{db_session_commit_and_globalize} or
         L{db_session_rollback_and_globalize} is called on this widget.
 
-        Note: You should not call this method more than once without
-        an intervening call to either rollback or commit.
+        WARNING: You should not call this method more than once
+        without an intervening call to either rollback or commit. This
+        method is _not_ reentrant.
         """
-        self.db_session = self.db_session.bind.Session()
-
+        if hasattr(self, "db_session"):
+            engine = self.db_session.bind
+        else:
+            engine = self.session.program.DBModel.engine
+        self.db_session = engine.Session()
+        
     def db_session_commit_and_globalize(self):
         """Commit the current local SQLAlchemy session (created with
         L{db_session_localize} on this widget) and remove/close the
@@ -80,3 +80,18 @@ class Widget(Webwidgets.Widget):
         if isinstance(sys.exc_info()[1], sqlalchemy.exceptions.SQLAlchemyError):
             self.db_session.rollback()
         Webwidgets.Widget.append_exception(self, message)
+
+class LogIn(Widget):
+    class SessionFilters(Webwidgets.LogIn.SessionFilters):
+        WwFilters = ['WormSession'] + Webwidgets.LogIn.SessionFilters.WwFilters
+
+        class WormSession(Webwidgets.Filter):
+            def authenticate(self, username, password):
+                self.db_session_localize()
+                res = self.ww_filter.authenticate(username, password)
+                if not res:
+                    self.db_session_rollback_and_globalize()
+                return res
+
+            def log_out(self):
+                self.ww_filter.log_out()
