@@ -8,17 +8,16 @@ class Widget(Webwidgets.Widget):
         def __get__(self, instance, owner):
             if instance is None:
                 return None
-            elif instance.parent is None:
-                if not hasattr(instance.session, "log_in"):
-                    return None
-                return instance.session.log_in.db_session
             elif 'db_session' in instance.__dict__:
                 return instance.__dict__['db_session']
-            else:
+            elif instance.parent:
                 try:
                     return instance.parent.get_ansestor_by_attribute(name="db_session").db_session
                 except KeyError:
-                    raise AttributeError
+                    pass
+            if hasattr(instance.session, "log_in"):
+                return instance.session.log_in.db_session
+            return None
 
         def __set__(self, instance, value):
             instance.__dict__['db_session'] = value
@@ -46,7 +45,7 @@ class Widget(Webwidgets.Widget):
         without an intervening call to either rollback or commit. This
         method is _not_ reentrant.
         """
-        if hasattr(self, "db_session"):
+        if self.db_session:
             engine = self.db_session.bind
         else:
             engine = self.session.program.DBModel.engine
