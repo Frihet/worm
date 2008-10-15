@@ -213,8 +213,8 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             def get_row_id(self, row):
                 return str(row.id)
 
-            def get_pages(self):
-                return int(math.ceil(float(self.get_row_query(all = True).count()) / self.rows_per_page))
+            def get_number_of_rows(self, output_options):
+                return self.get_row_query(all = True).count()
 
             def column_is_sortable(self, column):
                 return self.DBModel.column_is_sortable(column)
