@@ -85,16 +85,19 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 if self.db_mangle is not None:
                     query = self.db_mangle(query)
 
-                # Default sorting to title or symbol if any of them exist.
+                # Default sorting to title or symbol if any of them
+                # exist, do not modify self.sort as it renders in
+                # strange table display.
+                sort = self.sort
                 if not self.sort:
                     if 'symbol' in self.DBModel.get_column_names():
-                        self.sort = [('symbol', 'asc')]
+                        sort = sort + [('symbol', 'asc')]
                     elif 'title' in self.DBModel.get_column_names():
-                        self.sort = [('title', 'asc')]
+                        sort = sort + [('title', 'asc')]
 
                 # We need a complete ordering, so that the sorting is
                 # deterministic and stable over reloads...
-                sort = self.sort + [('id', 'asc')]
+                sort = sort + [('id', 'asc')]
 
                 # Define a way to filter the rows to remove children of
                 # collapsed rows.
