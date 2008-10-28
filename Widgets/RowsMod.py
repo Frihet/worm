@@ -85,9 +85,19 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 if self.db_mangle is not None:
                     query = self.db_mangle(query)
 
+                # Default sorting to title or symbol if any of them
+                # exist, do not modify self.sort as it renders in
+                # strange table display.
+                sort = self.sort
+                if not self.sort:
+                    if 'symbol' in self.DBModel.get_column_names():
+                        sort = sort + [('symbol', 'asc')]
+                    elif 'title' in self.DBModel.get_column_names():
+                        sort = sort + [('title', 'asc')]
+
                 # We need a complete ordering, so that the sorting is
                 # deterministic and stable over reloads...
-                sort = self.sort + [('id', 'asc')]
+                sort = sort + [('id', 'asc')]
 
                 # Define a way to filter the rows to remove children of
                 # collapsed rows.
@@ -171,7 +181,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                     query = query.order_by(getattr(col, order)())
                 query = query.order_by(self.DBModel.id.asc())
 
-                if not all and self.rows_per_page != 0:
+                if self.rows_per_page != 0 and not all:
                     query = query[(self.page - 1) * self.rows_per_page:
                                   self.page * self.rows_per_page]
 
