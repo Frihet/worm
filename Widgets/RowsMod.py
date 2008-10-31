@@ -77,6 +77,12 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             
             non_memory_storage = True
 
+
+            def __init__(self, *arg, **kw):
+                Webwidgets.Filter.__init__(self, *arg, **kw)
+                self.old_db_where = None
+                self.old_DBModel = None
+
             def get_row_query(self, all = False, output_options = {}, **kw):
                 expand_tree = self.get_expand_tree()
                 query = self.db_session.query(self.DBModel)
@@ -228,6 +234,17 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
 
             def column_is_sortable(self, column):
                 return self.DBModel.column_is_sortable(column)
+
+            def needs_refresh(self):
+                return ( self.ww_filter.needs_refresh()
+                         or self.db_where != self.old_db_where
+                         or self.DBModel != self.old_DBModel )
+
+            def reread(self):
+                self.ww_filter.reread()                
+                self.old_db_where = self.db_where
+                self.old_DBModel = self.DBModel
+
 
     class RowsFilters(Webwidgets.RowsComposite.RowsFilters):
         WwFilters = Webwidgets.RowsComposite.RowsFilters.WwFilters + ["StaticRowsFilter"]
