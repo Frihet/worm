@@ -31,7 +31,7 @@ class RowsListInput(Webwidgets.RowsListInput, Worm.Widgets.RowsMod.RowsComposite
         pass
     
     class SourceFilters(Worm.Widgets.RowsMod.RowsComposite.SourceFilters, Webwidgets.RowsListInput.SourceFilters):
-        WwFilters = Webwidgets.RowsListInput.SourceFilters.WwFilters + ['SQLAlchemyFilter']
+        WwFilters = ['SQLAlchemyRefreshFilter'] + Webwidgets.RowsListInput.SourceFilters.WwFilters + ['SQLAlchemyFilter']
 
     class RowsFilters(Worm.Widgets.RowsMod.RowsComposite.RowsFilters, Webwidgets.RowsListInput.RowsFilters):
         WwFilters = Webwidgets.RowsListInput.RowsFilters.WwFilters + ["StaticRowsFilter"]
