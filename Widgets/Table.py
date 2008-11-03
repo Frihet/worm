@@ -218,3 +218,59 @@ class ExpansionEditableTable(ExpansionTable):
             def done(self):
                 self.ww_filter.done()
                 self.ww_expansion['ww_expanded'] = self.ww_expansion['ww_expanded_old_version'] 
+
+
+
+class DynamicColumnTable(ReadonlyTable):
+    summary_table = None
+    column_table = None
+
+    pre_columns = Webwidgets.Utils.OrderedDict()
+    column_table_columns = Webwidgets.Utils.OrderedDict()
+    post_columns = Webwidgets.Utils.OrderedDict()
+
+    pre_column_groups = Webwidgets.Utils.OrderedDict()
+    post_column_groups = Webwidgets.Utils.OrderedDict()
+
+    def get_dynamic_columns(self):
+        # return [(id, title, self.column_table, column_table.id == self.summary_table.kafoo)]
+        raise NotImplementedError
+
+    @property
+    def DBModel(self):
+        dynamic_columns = self.get_dynamic_columns()
+        dyncol_key = hash(tuple(col[0] for col in dynamic_columns))
+        if "dyncol_views" not in self.__dict__:
+            self.__dict__['dyncol_views'] = {}
+        if dyncol_key not in self.dyncol_views:
+            cols = [self.summary_table]
+            joins = []
+            for column_id, column_title, column_table, column_where in dynamic_columns:
+                for column_table_column_name, column_table_column_title in self.column_table_columns.iteritems():
+                    cols.append(
+                        sqlalchemy.func.coalesce(getattr(column_table.c, column_table_column_name),
+                                                 0.0).label("dyncol_%s_%s" % (column_id, column_table_column_name)))
+                joins.append((column_table, column_where))
+            class DynamicColumnView(ReadonlyTable.WwModel.DBModel):
+                table = sqlalchemy.select(
+                    cols, from_obj=[Argentum.outerjoin(self.summary_table, *joins)]).alias("dynamiccolumnview")
+            sqlalchemy.orm.mapper(DynamicColumnView, DynamicColumnView.table)
+            self.dyncol_views[dyncol_key] = DynamicColumnView
+        return self.dyncol_views[dyncol_key]
+
+    @property
+    def columns(self):
+        res = Webwidgets.Utils.OrderedDict()
+        for column_id, column_title, column_table, column_where in self.get_dynamic_columns():
+            for (name, title) in self.column_table_columns.iteritems():
+                res["dyncol_%s_%s" % (column_id, name)] = {'title': name, 'dyncol':column_id}
+        return self.pre_columns + res + self.post_columns
+
+    @property
+    def column_groups(self):
+        return (  self.pre_column_groups
+                + Webwidgets.Utils.OrderedDict([('dyncol',
+                                                 Webwidgets.Utils.OrderedDict(dynamic_column[:2]
+                                                                              for dynamic_column
+                                                                              in self.get_dynamic_columns()))])
+                + self.post_column_groups)
