@@ -22,6 +22,7 @@
 
 import Webwidgets
 import Argentum, Worm.Model.Base, Worm.Widgets.Base, math, sqlalchemy.sql, itertools, types
+import Webwidgets.Utils
 
 class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
     """This is a version of L{RowsComposite} that fetches the rows
@@ -51,6 +52,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 if name == "ww_row_id":
                     return self.id
                 raise AttributeError(self, name)
+            
             def get_column_from_alias(cls, alias, col):
                 new_col = "%s_%s" % (cls.table.name, col)
                 if hasattr(alias.c, new_col):
@@ -98,6 +100,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             non_memory_storage = True
 
 
+            @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_row_query(self, all = False, output_options = {}, **kw):
                 expand_tree = self.get_expand_tree()
                 query = self.db_session.query(self.DBModel)
@@ -215,6 +218,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
 
                 return query
 
+            @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_rows(self, **kw):
                 result = list(self.get_row_query(**kw))
                 if self.debug_rows:
@@ -224,6 +228,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                         print "   ==>", 
                 return result
 
+            @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_row_by_id(self, row_id, **kwargs):
                 subtype = self.DBModel.get_column_subtype("id")
                 if isinstance(subtype, sqlalchemy.types.Unicode):
@@ -244,6 +249,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             def get_row_id(self, row):
                 return str(row.id)
 
+            @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_number_of_rows(self, output_options):
                 return self.get_row_query(all = True).count()
 

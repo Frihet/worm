@@ -22,6 +22,7 @@
 
 import Webwidgets
 import Argentum, Worm.Model.Base, Worm.Widgets.Base, Worm.Widgets.RowsMod, math, sqlalchemy.sql, itertools, types
+import Webwidgets.Utils
 
 class ReadonlyTable(Webwidgets.Table, Worm.Widgets.RowsMod.RowsComposite):
     debug_queries = False
@@ -149,7 +150,7 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                         self.table.ww_filter.reread()
 
                 def __getattr__(self, name):
-                    if name not in ('table', 'ww_is_new'):
+                    if name not in ('ww_filter', 'table', 'is_new', 'ww_is_new', 'edit_widgets'):
                         cols = self.table.ww_filter.edit_columns
                         if self.is_new():
                             cols = self.table.ww_filter.edit_new_columns
@@ -237,6 +238,7 @@ class DynamicColumnTable(ReadonlyTable):
         raise NotImplementedError
 
     @property
+    @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
     def DBModel(self):
         dynamic_columns = self.get_dynamic_columns()
         dyncol_key = hash(tuple(col[0] for col in dynamic_columns))
@@ -259,6 +261,7 @@ class DynamicColumnTable(ReadonlyTable):
         return self.dyncol_views[dyncol_key]
 
     @property
+    @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
     def columns(self):
         res = Webwidgets.Utils.OrderedDict()
         for column_id, column_title, column_table, column_where in self.get_dynamic_columns():
@@ -267,6 +270,7 @@ class DynamicColumnTable(ReadonlyTable):
         return self.pre_columns + res + self.post_columns
 
     @property
+    @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
     def column_groups(self):
         return (  self.pre_column_groups
                 + Webwidgets.Utils.OrderedDict([('dyncol',
