@@ -30,11 +30,18 @@ class BaseModel(Argentum.BaseModel):
         if cls.column_is_foreign(name):
             if cls.column_is_scalar(name):
                 foreign = cls.get_column_foreign_class(name)
+
                 class ForeignInput(Worm.Widgets.ListMod.RowsSingleValueListInput):
-                    class WwModel(Worm.Widgets.ListMod.RowsSingleValueListInput.WwModel):
-                        DBModel = foreign
-                        if hasattr(foreign, 'is_current'):
-                            db_where = foreign.is_current == True
+                    DBModel = foreign
+
+                    @property
+                    def db_where(self):
+                        db_where = getattr(self.parent_model, "%s__ww_db_where" % (name,), Argentum.True_)
+                        if hasattr(self.DBModel, "is_current"):
+                            db_where = sqlalchemy.and_(db_where,
+                                                       foreign.is_current == True)
+                        return db_where
+                        
                 return ForeignInput
             else:
                 return None
@@ -98,7 +105,8 @@ class BaseModel(Argentum.BaseModel):
         members = {'WwFilters': widget.WwFilters + ["ValueMappedWidgetValueMapper"],
                    'ValueMappedWidgetValueMapper': type("ValueMappedWidgetValueMapper",
                                                         (Webwidgets.Filter,),
-                                                        {'value': Value()})}
+                                                        {'value': Value()}),
+                   'parent_model': model}
         # Set up validators
         def split_name(member_name):
             for member_type in ["validate_", "invalid_"]:
@@ -108,6 +116,7 @@ class BaseModel(Argentum.BaseModel):
                         if member_name.startswith(member_scope):
                             return member_type, member_scope, member_name[len(member_scope):]
             return None
+        
         for member_name in dir(model):
             split_member_name = split_name(member_name)
             if not split_member_name: continue
