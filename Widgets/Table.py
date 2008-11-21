@@ -161,7 +161,22 @@ class Table(ReadonlyTable, Webwidgets.EditableTable):
                     return getattr(self.ww_filter, name)
 
     class RowsFilters(ReadonlyTable.RowsFilters, Webwidgets.EditableTable.RowsFilters):
-        WwFilters = ["TableEditableFilter", "SQLAlchemyEditingFilter"] + ReadonlyTable.RowsFilters.WwFilters
+        WwFilters = ["SQLAlchemyEditingAccesRightsFilter", "TableEditableFilter", "SQLAlchemyEditingFilter"] + ReadonlyTable.RowsFilters.WwFilters
+
+        class SQLAlchemyEditingAccesRightsFilter(Webwidgets.Filter):
+            def get_active_edit_function(self, path):
+                row = self.object.ww_filter.get_row_by_id(path[-1])
+                if hasattr(row, "ww_row_access"):
+                    if not row.ww_row_access(path[:-1]):
+                        return False
+                return self.ww_filter.get_active_edit_function(path)
+
+            def get_active_edit_group_function(self, path):
+                cls = self.object.ww_filter.DBModel
+                if hasattr(cls, "ww_access"):
+                    if not cls.ww_access(path):
+                        return False
+                return self.ww_filter.get_active_edit_group_function(path)
 
         class SQLAlchemyEditingFilter(Webwidgets.Filter):
             def create_new_row(self):
