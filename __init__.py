@@ -40,6 +40,7 @@ About
 # directory. Doing so makes us have copies of some classes, which
 # fucks up isinstance()-calls.
 if __name__ == "Worm":
+    from Session import *
     from Program import *
     from Widgets.Base import *
     from Widgets.RowsMod import *
