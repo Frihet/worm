@@ -50,6 +50,9 @@ class Widget(Webwidgets.Widget):
         else:
             engine = self.session.program.DBModel.engine
         self.db_session = engine.Session()
+
+        # Keep track of session
+        self.session.worm_localized.add(self.db_session)
         
     def db_session_commit_and_globalize(self):
         """Commit the current local SQLAlchemy session (created with
@@ -60,6 +63,7 @@ class Widget(Webwidgets.Widget):
         your local session visible in the global session (to this and
         other widgets)."""
         self.db_session.commit()
+        self.session.worm_localized.remove(self.db_session)
         del self.db_session
         # FIXME: Update all nested localized sessions.
         self.db_session.expire_all()
@@ -70,6 +74,7 @@ class Widget(Webwidgets.Widget):
         session, making the global session visible to this widget and
         descendant widgets again."""
         self.db_session.rollback()
+        self.session.worm_localized.remove(self.db_session)
         del self.db_session
 
     def append_exception(self, message=u''):
