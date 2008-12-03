@@ -24,6 +24,7 @@ import Webwidgets
 import Argentum, Worm.Model.Base, Worm.Widgets.Base, math, sqlalchemy.sql, itertools, types
 import Webwidgets.Utils
 
+
 class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
     """This is a version of L{RowsComposite} that fetches the rows
     from an SQLAlchemy mapped class."""
@@ -47,7 +48,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             requires the mapped model class to be available in the
             table attribute (this is fullfilled automatically if you
             are using elixir)."""
-            
+
             def __getattr__(self, name):
                 if name == "ww_row_id":
                     return self.id
@@ -60,6 +61,15 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 else:
                     return getattr(alias.c, col)
             get_column_from_alias = classmethod(get_column_from_alias)
+
+            def prefetch(cls, session):
+                if hasattr(cls,'table'):
+                    table = cls.table
+                    for view in Argentum.find_views(table):
+                        view.refresh(session.connection())
+            prefetch = classmethod(prefetch)
+
+                
 
         pre_rows = []
         post_rows = []
@@ -99,16 +109,17 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             
             non_memory_storage = True
 
-
+                
             @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_row_query(self, all = False, output_options = {}, **kw):
                 expand_tree = self.get_expand_tree()
                 query = self.db_session.query(self.DBModel)
+                
                 if self.db_where is not None:
                     query = query.filter(self.db_where)
                 if self.db_mangle is not None:
                     query = self.db_mangle(query)
-
+                
                 # Default sorting to title or symbol if any of them
                 # exist, do not modify self.sort as it renders in
                 # strange table display.
@@ -118,11 +129,11 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                         sort = sort + [('symbol', 'asc')]
                     elif 'title' in self.DBModel.get_column_names():
                         sort = sort + [('title', 'asc')]
-
+                
                 # We need a complete ordering, so that the sorting is
                 # deterministic and stable over reloads...
                 sort = sort + [('id', 'asc')]
-
+                
                 # Define a way to filter the rows to remove children of
                 # collapsed rows.
                 if self.default_expand:
@@ -165,14 +176,14 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                             getattr(self.DBModel.get_column_from_alias(prev_row_id, col).expression_element(),
                                     order)())
                     prev_row_id_query = prev_row_id_query.limit(1)
-
+                    
                     # Now that previous line is outer joined to each line
                     prev_row = query.compile().alias()
                     query = query.select_from(
                         self.DBModel.table.outerjoin(
                             prev_row,
                             self.DBModel.get_column_from_alias(prev_row, 'id') == prev_row_id_query.as_scalar()))
-
+                    
                     # This should be recognizable from the pure in-memory
                     # algoritm used in Webwidgets.Table (it's nearly the
                     # same, but the loop has been unwound one time sort
@@ -193,7 +204,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                                                      == getattr(self.DBModel, node.col), node_query)],
                                                    else_ = Argentum.True_)
                 query = query.filter(tree_to_filter(expand_tree))
-
+                
                 for col, order in sort:
                     if self.DBModel.column_is_foreign(col):
                         # FIXME: WHat if we have multiple foreign keys to the same table?
@@ -215,11 +226,15 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 if self.debug_queries:
                     print "QUERY"
                     print query
-
                 return query
+
+            def prefetch(self):
+                self.DBModel.prefetch(self.db_session)
+                
 
             @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_rows(self, **kw):
+                self.prefetch()
                 result = list(self.get_row_query(**kw))
                 if self.debug_rows:
                     print "ROWS", repr(self), "==>"
@@ -230,6 +245,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
 
             @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_row_by_id(self, row_id, **kwargs):
+                self.prefetch()
                 subtype = self.DBModel.get_column_subtype("id")
                 if isinstance(subtype, sqlalchemy.types.Unicode):
                     row_id = unicode(row_id)
@@ -251,11 +267,12 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
 
             @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_number_of_rows(self, output_options):
+                self.prefetch()
                 return self.get_row_query(all = True).count()
 
             def column_is_sortable(self, column):
                 return self.DBModel.column_is_sortable(column)
-
+                
 
     class RowsFilters(Webwidgets.RowsComposite.RowsFilters):
         WwFilters = Webwidgets.RowsComposite.RowsFilters.WwFilters + ["StaticRowsFilter"]
