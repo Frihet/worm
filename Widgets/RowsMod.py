@@ -97,7 +97,8 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                          or self.DBModel != self.old_DBModel )
 
             def reread(self):
-                self.ww_filter.reread()                
+                Argentum.soil_all_pseudo_materialized()
+                self.ww_filter.reread()
                 self.old_db_where = self.db_where
                 self.old_DBModel = self.DBModel
 

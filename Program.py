@@ -1,4 +1,4 @@
-import Webwidgets
+import Webwidgets, Argentum
 
 class Program(Webwidgets.Program):
     DBModel = None
@@ -12,3 +12,8 @@ class Program(Webwidgets.Program):
 
             self.worm_localized = set()
             """Set of localized database sessions for cleanup."""
+
+        def handle_request(self, transaction):
+            Argentum.soil_all_pseudo_materialized()
+
+            Webwidgets.Program.Session.handle_request(self, transaction)

@@ -32,7 +32,7 @@ class ReadonlyTable(Webwidgets.Table, Worm.Widgets.RowsMod.RowsComposite):
         pass
     
     class SourceFilters(Worm.Widgets.RowsMod.RowsComposite.SourceFilters, Webwidgets.Table.SourceFilters):
-        WwFilters = Webwidgets.Table.SourceFilters.WwFilters + ['SQLAlchemyFilter']
+        WwFilters = ['SQLAlchemyRefreshFilter'] + Webwidgets.Table.SourceFilters.WwFilters + ['SQLAlchemyFilter']
 
     class RowsFilters(Worm.Widgets.RowsMod.RowsComposite.RowsFilters, Webwidgets.Table.RowsFilters):
         WwFilters = Webwidgets.Table.RowsFilters.WwFilters + ["StaticRowsFilter"]
