@@ -270,10 +270,15 @@ class DynamicColumnTable(ReadonlyTable):
                 joins.append((column_table, column_where))
             class DynamicColumnView(ReadonlyTable.WwModel.DBModel):
                 table = sqlalchemy.select(
-                    cols, from_obj=[Argentum.outerjoin(self.summary_table, *joins)]).alias("dynamiccolumnview")
+                    cols,
+                    self.db_dynamic_where(dynamic_columns),
+                    from_obj=[Argentum.outerjoin(self.summary_table, *joins)]).distinct().alias("dynamiccolumnview")
             sqlalchemy.orm.mapper(DynamicColumnView, DynamicColumnView.table)
             self.dyncol_views[dyncol_key] = DynamicColumnView
         return self.dyncol_views[dyncol_key]
+
+    def db_dynamic_where(self, dynamic_columns):
+        return Argentum.True_
 
     @property
     @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
