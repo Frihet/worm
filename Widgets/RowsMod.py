@@ -20,7 +20,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-from __future__ import with_statement 
 import Webwidgets
 import Argentum, Worm.Model.Base, Worm.Widgets.Base, math, sqlalchemy.sql, itertools, types
 import Webwidgets.Utils
@@ -63,6 +62,14 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                     return getattr(alias.c, col)
             get_column_from_alias = classmethod(get_column_from_alias)
 
+            def prefetch(cls, session):
+                if hasattr(cls,'table'):
+                    table = cls.table
+                    for view in Argentum.find_views(table):
+                        view.refresh(session.connection())
+            prefetch = classmethod(prefetch)
+
+                
 
         pre_rows = []
         post_rows = []
@@ -103,16 +110,12 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             
             non_memory_storage = True
 
-
-
-
                 
             @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_row_query(self, all = False, output_options = {}, **kw):
-                
                 expand_tree = self.get_expand_tree()
                 query = self.db_session.query(self.DBModel)
-
+                
                 if self.db_where is not None:
                     query = query.filter(self.db_where)
                 if self.db_mangle is not None:
@@ -201,7 +204,6 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                         return sqlalchemy.sql.case([(   self.DBModel.get_column_from_alias(prev_row, node.col)
                                                      == getattr(self.DBModel, node.col), node_query)],
                                                    else_ = Argentum.True_)
-
                 query = query.filter(tree_to_filter(expand_tree))
                 
                 for col, order in sort:
@@ -225,23 +227,26 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 if self.debug_queries:
                     print "QUERY"
                     print query
-
                 return query
 
-        
+            def prefetch(self):
+                self.DBModel.prefetch(self.db_session)
+                
+
             @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_rows(self, **kw):
+                self.prefetch()
                 result = list(self.get_row_query(**kw))
                 if self.debug_rows:
                     print "ROWS", repr(self), "==>"
                     for row in result:
                         print "    ", repr(row)
                         print "   ==>", 
-
                 return result
 
             @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_row_by_id(self, row_id, **kwargs):
+                self.prefetch()
                 subtype = self.DBModel.get_column_subtype("id")
                 if isinstance(subtype, sqlalchemy.types.Unicode):
                     row_id = unicode(row_id)
@@ -251,10 +256,6 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                     row_id = int(row_id)
                 else:
                     raise NotImplemented
-                rows = self.get_rows(**kwargs)
-                for row in rows:
-                    if row.id == row_id:
-                        return row
                 # Order by id not to have sqlalchemy order by rowid
                 # automatically under our feet and fuck up views with
                 # joins...
@@ -267,9 +268,9 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
 
             @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
             def get_number_of_rows(self, output_options):
-                self.debug_queries = True
+                self.prefetch()
                 return self.get_row_query(all = True).count()
-                                    
+
             def column_is_sortable(self, column):
                 return self.DBModel.column_is_sortable(column)
                 

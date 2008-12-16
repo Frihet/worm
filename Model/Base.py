@@ -1,6 +1,5 @@
 import Webwidgets, Argentum
 import sqlalchemy
-import Worm.Utils
 
 class BaseModel(Argentum.BaseModel):
     """This class extends SQLAlchemy models with some extra utility
@@ -89,7 +88,7 @@ class BaseModel(Argentum.BaseModel):
 
                     value = getattr(model, name)
                     if value is not None:
-                        value = Worm.Utils.load_from_session_cached(db_session,value)
+                        value = db_session.load_from_session(value)
                     return value
 
                 def __set__(self, instance, value):

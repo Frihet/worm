@@ -12,11 +12,11 @@ class Connection(BaseConnection):
             sql = arg[0]
             if not isinstance(sql, (str, unicode)):
                 sql = sql.compile(self)
-#                params = sql.construct_params()
+                params = sql.construct_params()
                 sql = str(sql)
-#                for key, value in params.iteritems():
-#                    sql = sql.replace(":%s" % (key,),
-#                                      "'%s'" % (value,))
+                for key, value in params.iteritems():
+                    sql = sql.replace(":%s" % (key,),
+                                      "'%s'" % (value,))
                 
             with timings('sql', sql):
                 return BaseConnection.execute(self, *arg, **kw)
