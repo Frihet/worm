@@ -253,7 +253,7 @@ class DynamicColumnTable(ReadonlyTable):
         raise NotImplementedError
 
     @property
-    @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
+    @Webwidgets.Utils.Cache.cache(time="request", context="class")
     def DBModel(self):
         dynamic_columns = self.get_dynamic_columns()
         dyncol_key = hash(tuple(col[0] for col in dynamic_columns))
@@ -276,7 +276,7 @@ class DynamicColumnTable(ReadonlyTable):
         return self.dyncol_views[dyncol_key]
 
     @property
-    @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
+    @Webwidgets.Utils.Cache.cache(time="request", context="class")
     def columns(self):
         res = Webwidgets.Utils.OrderedDict()
         for column_id, column_title, column_table, column_where in self.get_dynamic_columns():
@@ -285,7 +285,7 @@ class DynamicColumnTable(ReadonlyTable):
         return self.pre_columns + res + self.post_columns
 
     @property
-    @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
+    @Webwidgets.Utils.Cache.cache(time="request", context="class")
     def column_groups(self):
         return (  self.pre_column_groups
                 + Webwidgets.Utils.OrderedDict([('dyncol',

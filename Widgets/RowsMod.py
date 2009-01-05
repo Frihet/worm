@@ -111,7 +111,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             non_memory_storage = True
 
                 
-            @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
+            @Webwidgets.Utils.Cache.cache(time="request_part", context="class")
             def get_row_query(self, all = False, output_options = {}, **kw):
                 expand_tree = self.get_expand_tree()
                 query = self.db_session.query(self.DBModel)
@@ -233,7 +233,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                 self.DBModel.prefetch(self.db_session)
                 
 
-            @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
+            @Webwidgets.Utils.Cache.cache(time="request_part", context="class")
             def get_rows(self, **kw):
                 self.prefetch()
                 result = list(self.get_row_query(**kw))
@@ -244,7 +244,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
                         print "   ==>", 
                 return result
 
-            @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
+            @Webwidgets.Utils.Cache.cache(time="request_part", context="class")
             def get_row_by_id(self, row_id, **kwargs):
                 self.prefetch()
                 subtype = self.DBModel.get_column_subtype("id")
@@ -266,7 +266,7 @@ class RowsComposite(Webwidgets.RowsComposite, Worm.Widgets.Base.Widget):
             def get_row_id(self, row):
                 return str(row.id)
 
-            @Webwidgets.Utils.Cache.cache(per_request = True, per_class=True)
+            @Webwidgets.Utils.Cache.cache(time="request_part", context="class")
             def get_number_of_rows(self, output_options):
                 self.prefetch()
                 return self.get_row_query(all = True).count()

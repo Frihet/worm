@@ -107,9 +107,19 @@ class BaseModel(Argentum.BaseModel):
                                                         (Webwidgets.Filter,),
                                                         {'value': Value()}),
                    'parent_model': model}
+
+
+
+
+        # FIXME: Change so that Table contains a class to inherit from by the widget!
+
+
+
+
+
         # Set up validators
         def split_name(member_name):
-            for member_type in ["validate_", "invalid_"]:
+            for member_type in ["validate_", "invalid_", "input_required_"]:
                 if member_name.startswith(member_type):
                     member_name = member_name[len(member_type):]
                     for member_scope in ["all_", name + "_"]:
@@ -130,8 +140,10 @@ class BaseModel(Argentum.BaseModel):
                     else:
                         return lambda self: member_value()
                 members['validate_' + split_member_name] = make_method(member_scope, member_value, name)
-            else:
-                members['invalid_' + split_member_name] = member_value
+            elif member_type == "invalid_":
+                members[member_type + split_member_name] = member_value
+            elif member_type == "input_required_":
+                members["input_required"] = member_value(name)
 
         ValueMappedWidget = type("ValueMapped(%s.%s)" % (widget.__module__, widget.__name__),
                                  (widget,) + extra_classes,
@@ -149,3 +161,6 @@ class BaseModel(Argentum.BaseModel):
     invalid_all_not_empty = "Field can not be empty"
     def validate_all_not_empty(self, col):
         return not getattr(self, "%s__not_empty" % (col,), False) or not not getattr(self, col)
+
+    def input_required_all(self, col):
+        return getattr(self, "%s__not_empty" % (col,), False)
