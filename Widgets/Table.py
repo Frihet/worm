@@ -267,6 +267,9 @@ class DynamicColumnTable(ReadonlyTable):
                     cols.append(
                         sqlalchemy.func.coalesce(getattr(column_table.c, column_table_column_name),
                                                  0.0).label("dyncol_%s_%s" % (column_id, column_table_column_name)))
+                # Add the ID-column for debugging purposes (debugging broken where-clauses / join clauses that is :)
+                cols.append(sqlalchemy.cast(column_table.c.id,
+                                            sqlalchemy.String(128)).label("dyncol_id_%s" % (column_id,)))
                 joins.append((column_table, column_where))
             class DynamicColumnView(ReadonlyTable.WwModel.DBModel):
                 table = sqlalchemy.select(
