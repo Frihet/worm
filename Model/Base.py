@@ -27,7 +27,9 @@ class BaseModel(Argentum.BaseModel):
         # We can't import this globally, or we'd have a loop in import dependenmcies :S
         import Worm.Widgets.ListMod
 
-        if cls.column_is_foreign(name):
+        if hasattr(cls, "%s__input" % (name,)):
+            return getattr(cls, "%s__input" % (name,))
+        elif cls.column_is_foreign(name):
             if cls.column_is_scalar(name):
                 foreign = cls.get_column_foreign_class(name)
 
