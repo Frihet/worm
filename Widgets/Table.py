@@ -296,3 +296,18 @@ class DynamicColumnTable(ReadonlyTable):
                                                                               for dynamic_column
                                                                               in self.get_dynamic_columns()))])
                 + self.post_column_groups)
+
+
+    class RowsFilters(ReadonlyTable.RowsFilters):
+        WwFilters = ReadonlyTable.RowsFilters.WwFilters + ["PseudoMaterializedTableBugWorkaround"]
+
+        class PseudoMaterializedTableBugWorkaround(Webwidgets.Filter):
+            def get_rows(self, **kw):
+                self.db_session.connection().execute(sqlalchemy.select([self.summary_table]))
+                self.db_session.connection().execute(sqlalchemy.select([self.column_table]))
+                return self.ww_filter.get_rows(**kw)
+
+            def get_row_by_id(self, **kw):
+                self.db_session.connection().execute(sqlalchemy.select([self.summary_table]))
+                self.db_session.connection().execute(sqlalchemy.select([self.column_table]))
+                return self.ww_filter.get_row_by_id(**kw)
